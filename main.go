@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
@@ -27,7 +28,16 @@ var db *sql.DB
 
 func main() {
 	var err error
-	db, err = sql.Open("postgres", "postgres://root:postgres@localhost:5432/go_test?sslmode=disable")
+	dbUser := os.Getenv("DB_USER")
+	dbPassword := os.Getenv("DB_PASSWORD")
+	dbName := os.Getenv("DB_NAME")
+	dbHost := os.Getenv("DB_HOST")
+	dbPort := os.Getenv("DB_PORT")
+
+	dbConnectionString := "postgres://" + dbUser + ":" + dbPassword + "@" + dbHost + ":" + dbPort + "/" + dbName + "?sslmode=disable"
+
+	// Open a connection to the database
+	db, err = sql.Open("postgres", dbConnectionString)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,7 +48,7 @@ func main() {
 	// router.DELETE("/tasks/:id", deleteTask)
 	router.POST("/tasks", addTask)
 
-	router.Run("localhost:8080")
+	router.Run("0.0.0.0:8080")
 }
 
 func getTask(c *gin.Context) {
