@@ -1,31 +1,39 @@
-name: CI
+name: Build Test
 on:
   push:
     branches:
       - main
-env:
-  DB_USER: ${{ secrets.DB_USER }}
-  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-  DB_NAME: ${{ secrets.DB_NAME }}
 
 jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: ${{ secrets.DB_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.DB_NAME }}
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
+      with:
+        go-version: 1.21.x
+        
+    - name: Install golang-migrate
+      run: go get -u -d github.com/golang-migrate/migrate/cmd/migrate
 
-    - name: Build Containers 
+    - name: Run Migrations
+      run: |
+        migrate -database "postgres://$DB_USER:$DB_PASSWORD@localhost:5432/$DB_NAME?sslmode=disable" -path ./migrations up
+      env:
+        DB_USER: ${{ secrets.DB_USER }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_NAME: ${{ secrets.DB_NAME }}
+
+    - name: Build Containers
       run: docker-compose up -d --build
-    
-    - name: Wait for Containers
-      run: sleep 10
-
-    - name: List Containers
-      run: docker-compose ps
-
-    - name: Run Test
-      run: curl localhost:8080/tasks
- 
