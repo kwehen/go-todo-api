@@ -24,16 +24,16 @@ jobs:
       with:
         go-version: 1.23.x
         
-    - name: Install golang-migrate
-      run: go get -u -d github.com/golang-migrate/migrate/cmd/migrate
+    # - name: Install golang-migrate
+    #   run: go get -u -d github.com/golang-migrate/migrate/cmd/migrate
 
-    - name: Run Migrations
-      run: |
-        migrate -database "postgres://$DB_USER:$DB_PASSWORD@localhost:5432/$DB_NAME?sslmode=disable" -path ./migrations up
-      env:
-        DB_USER: ${{ secrets.DB_USER }}
-        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-        DB_NAME: ${{ secrets.DB_NAME }}
+    # - name: Run Migrations
+    #   run: |
+    #     migrate -database "postgres://$DB_USER:$DB_PASSWORD@localhost:5432/$DB_NAME?sslmode=disable" -path ./migrations up
+    #   env:
+    #     DB_USER: ${{ secrets.DB_USER }}
+    #     DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+    #     DB_NAME: ${{ secrets.DB_NAME }}
 
     - name: Build Containers
       run: docker-compose up -d --build
