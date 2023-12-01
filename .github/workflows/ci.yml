@@ -1,8 +1,9 @@
-name: CI
+name: Build Test
 on:
   push:
     branches:
       - main
+
 env:
   DB_USER: ${{ secrets.DB_USER }}
   DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
@@ -12,20 +13,29 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: ${{ secrets.DB_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.DB_NAME }}
+        ports:
+          - 5432:5432
+        volumes:
+          - ./database:/var/lib/postgresql/data
+          - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
-
-    - name: Build Containers 
-      run: docker-compose up -d --build
-    
-    - name: Wait for Containers
-      run: sleep 10
-
-    - name: List Containers
-      run: docker-compose ps
-
-    - name: Run Test
+      with:
+        go-version: 1.23.x
+    - name: Setup Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.21.x
+    - name: Run GO Code
+      run: go run main.go
+    - name: Check connectivity
       run: curl localhost:8080/tasks
- 
