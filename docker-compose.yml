@@ -4,7 +4,7 @@ services:
     container_name: database
     image: postgres
     env_file:
-      - .env
+      - .env  # This line is kept for local development
     ports:
       - "5432:5432"
     volumes:
@@ -24,8 +24,6 @@ services:
       volumes:
         - .:/go/src/app
       command: bash -c "go build && ./main -b 0.0.0.0:8080 timeout 120"
-      env_file:
-        - .env
       environment:
         - DB_HOST=database
         - DB_USER=${DB_USER}
