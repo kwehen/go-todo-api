@@ -9,14 +9,20 @@ env:
   DB_NAME: ${{ secrets.DB_NAME }}
 
 jobs:
-  docker:
-    timeout-minutes: 10
+  build:
+    name: Build
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout
+    - name: Checkout Code
       uses: actions/checkout@v2
+
+    - name: Build Containers 
+      run: docker-compose up -d --build --wait --wait-timeout 30
     
-    - name: Start containers
-      run: docker-compose up -d --build
-    
+    - name: List Containers
+      run: docker-compose ps
+
+    - name: Run Test
+      run: curl localhost:8080/tasks
+ 
