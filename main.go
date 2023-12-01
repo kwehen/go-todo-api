@@ -122,3 +122,5 @@ func addTask(c *gin.Context) {
 // 	}
 // 	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Task not found"})
 // }
+
+// Test GitHub Actions
