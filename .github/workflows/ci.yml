@@ -15,19 +15,17 @@ jobs:
 
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Build Containers 
       run: docker-compose up -d --build
-
-    - name: Wait for DB
-      uses: dadarek/wait-for-dependencies@v1
-      with:
-        timeout: 60
-        wait-for: 'database:5432'
+    
+    - name: Wait for Containers
+      run: sleep 10
 
     - name: List Containers
       run: docker-compose ps
 
     - name: Run Test
       run: curl localhost:8080/tasks
+ 
