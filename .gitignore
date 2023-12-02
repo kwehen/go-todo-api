@@ -1,3 +1,3 @@
 docker-compose2.yml
-.env 
+.env
 ./github/workflows/ci2.yml
