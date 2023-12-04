@@ -11,15 +11,24 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - uses: isbang/compose-action@v1.5.1
-        with:
-          compose-file: "./docker-compose.yml"
-        env:
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_NAME: ${{ secrets.DB_NAME }}
+      - name: Set up Postgres
+        run: |
+          docker image build -f /database/Dockerfile
+          docker container run -d --rm -p 5432:5432 -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres --name test-prgress test-postgres:latest
+      - name: Docker Compose API
+        run: |
+          docker-compose -f ./docker-compose3.yml up -d --build
+      # - uses: isbang/compose-action@v1.5.1
+      #   with:
+      #     compose-file: "./docker-compose3.yml"
+      #   env:
+      #     DB_USER: postgres 
+      #     DB_PASSWORD: postgres
+      #     DB_NAME: postgres
 
       - name: List Docker images
         run: docker image ls
       - name: List Docker containers
         run: docker ps -a
+      - name: Run tests
+        run: curl localhost:8080/tasks

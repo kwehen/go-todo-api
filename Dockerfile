@@ -9,4 +9,3 @@ COPY . .
 RUN go build -v -o main .
 
 CMD ["/app/main"]
-# ENTRYPOINT [ "/app/main" ]
