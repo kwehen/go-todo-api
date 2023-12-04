@@ -13,8 +13,8 @@ jobs:
       - uses: actions/checkout@v3
       - name: Set up Postgres
         run: |
-          docker image build -f ./database/Dockerfile
-          docker container run -d --rm -p 5432:5432 -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres --name test-prgress test-postgres:latest
+          docker image build -f ./database/Dockerfile -t test-postgres:latest ./database
+          docker container run -d --rm -p 5432:5432 -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres --name test-progress test-postgres:latest        
       - name: Docker Compose API
         run: |
           docker-compose -f ./docker-compose3.yml up -d --build
