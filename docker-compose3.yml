@@ -2,8 +2,8 @@ version: "3.9"
 services:
   api:
     container_name: api
-    env_file:
-      - .env
+    # env_file:
+    #   - .env
     build:
       context: .
     ports:
@@ -12,9 +12,9 @@ services:
       - .:/go/src/app
     command: bash -c "go build && ./main -b 0.0.0.0:8080 timeout 120"
     environment:
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=postgres
     networks:
       - fullstack
 
