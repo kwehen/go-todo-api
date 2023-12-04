@@ -33,7 +33,7 @@ func main() {
 	// dbHost := os.Getenv("DB_HOST")
 	// dbPort := os.Getenv("DB_PORT")
 
-	dbConnectionString := "postgresql://postgres:postgres@localhost:5432/postgres?sslmode=disable"
+	dbConnectionString := "postgresql://postgres:postgres@test-progress:5432/postgres?sslmode=disable"
 
 	// Open a connection to the database
 	db, err = sql.Open("postgres", dbConnectionString)
