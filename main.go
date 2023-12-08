@@ -17,12 +17,6 @@ type task struct {
 	Completed bool    `json:"completed"`
 }
 
-// var tasks = []task{
-// 	{ID: "1", ToDo: "Add web frontend to GPT API", Urgency: "Low", EstTime: 4.0, Completed: false},
-// 	{ID: "2", ToDo: "Consume API with GO", Urgency: "Medium", EstTime: 5.0, Completed: false},
-// 	{ID: "3", ToDo: "Reconfigure k3s cluster", Urgency: "Medium", EstTime: 2.5, Completed: false},
-// }
-
 var db *sql.DB
 
 func main() {
@@ -33,7 +27,7 @@ func main() {
 	// dbHost := os.Getenv("DB_HOST")
 	// dbPort := os.Getenv("DB_PORT")
 
-	dbConnectionString := "postgresql://postgres:postgres@test-progress:5432/postgres?sslmode=disable"
+	dbConnectionString := "postgres://postgres:postgres@10.0.0.9:5432/postgres?sslmode=disable"
 
 	// Open a connection to the database
 	db, err = sql.Open("postgres", dbConnectionString)
@@ -43,9 +37,10 @@ func main() {
 
 	router := gin.Default()
 	router.GET("/tasks", getTask)
-	// router.GET("/tasks/:id", getTaskByID)
-	// router.DELETE("/tasks/:id", deleteTask)
+	router.GET("/tasks/:id", getTaskByID)
+	router.DELETE("/tasks/:id", deleteTask)
 	router.POST("/tasks", addTask)
+	router.GET("/completed/:id", completeTask)
 
 	router.Run("0.0.0.0:8080")
 }
@@ -97,29 +92,63 @@ func addTask(c *gin.Context) {
 	c.JSON(http.StatusCreated, newTask)
 }
 
-// func getTaskByID(c *gin.Context) {
-// 	id := c.Param("id")
+func deleteTask(c *gin.Context) {
+	id := c.Param("id")
 
-// 	for _, task := range tasks {
-// 		if task.ID == id {
-// 			c.IndentedJSON(http.StatusOK, task)
-// 			return
-// 		}
-// 	}
-// 	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Task not found"})
-// }
+	stmt, err := db.Prepare("DELETE FROM tasks WHERE task_id = $1")
+	if err != nil {
+		log.Println("Error preparing SQL statement:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		return
+	}
+	defer stmt.Close()
 
-// func deleteTask(c *gin.Context) {
-// 	id := c.Param("id")
+	if _, err := stmt.Exec(id); err != nil {
+		log.Println("Error executing SQL statement:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		return
+	}
 
-// 	for i, task := range tasks {
-// 		if task.ID == id {
-// 			tasks = append(tasks[:i], tasks[i+1:]...)
-// 			c.IndentedJSON(http.StatusOK, gin.H{"message": "Task deleted"})
-// 			return
-// 		}
-// 	}
-// 	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Task not found"})
-// }
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "Task deleted"})
+}
 
-// Test GitHub Actions
+func getTaskByID(c *gin.Context) {
+	id := c.Param("id")
+
+	rows, err := db.Query("SELECT * FROM tasks WHERE task_id = $1", id)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	var t task
+	for rows.Next() {
+		if err := rows.Scan(&t.ID, &t.Task, &t.Urgency, &t.Hours, &t.Completed); err != nil {
+			log.Fatal(err)
+		}
+	}
+	if err := rows.Err(); err != nil {
+		log.Fatal(err)
+	}
+	c.IndentedJSON(http.StatusOK, t)
+}
+
+func completeTask(c *gin.Context) {
+	id := c.Param("id")
+
+	stmt, err := db.Prepare("UPDATE tasks SET completed = true WHERE task_id = $1")
+	if err != nil {
+		log.Println("Error preparing SQL statement:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		return
+	}
+	defer stmt.Close()
+
+	if _, err := stmt.Exec(id); err != nil {
+		log.Println("Error executing SQL statement:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "Task completed"})
+}
