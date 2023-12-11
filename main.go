@@ -17,6 +17,11 @@ type task struct {
 	Completed bool    `json:"completed"`
 }
 
+type completed struct {
+	ID   string `json:"id"`
+	Task string `json:"task"`
+}
+
 var db *sql.DB
 
 func main() {
@@ -42,6 +47,7 @@ func main() {
 	router.POST("/tasks", addTask)
 	router.GET("/completed/:id", completeTask)
 	router.POST("/completed/:id", addToCompletedTable)
+	router.GET("/completed", getCompletedTasks)
 
 	router.Run("0.0.0.0:8080")
 }
@@ -172,4 +178,27 @@ func addToCompletedTable(c *gin.Context) {
 	}
 
 	c.IndentedJSON(http.StatusOK, gin.H{"message": "Task added to completed table"})
+}
+
+func getCompletedTasks(c *gin.Context) {
+	c.Header("Content-Type", "application/json")
+
+	rows, err := db.Query("SELECT * FROM completed")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	var tasks []completed
+	for rows.Next() {
+		var t completed
+		if err := rows.Scan(&t.ID, &t.Task); err != nil {
+			log.Fatal(err)
+		}
+		tasks = append(tasks, t)
+	}
+	if err := rows.Err(); err != nil {
+		log.Fatal(err)
+	}
+	c.IndentedJSON(http.StatusOK, tasks)
 }
