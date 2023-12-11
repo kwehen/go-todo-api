@@ -4,3 +4,5 @@ docker-compose2.yml
 Makefile
 docker-compose.yml
 docker-compose2.yml
+docker-compose3.yml
+Dockerfile
