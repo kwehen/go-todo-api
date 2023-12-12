@@ -41,6 +41,10 @@ func main() {
 	}
 
 	router := gin.Default()
+	router.LoadHTMLGlob("templates/*")
+	router.GET("/", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "index.html", nil)
+	})
 	router.GET("/tasks", getTask)
 	router.GET("/tasks/:id", getTaskByID)
 	router.DELETE("/delete/:id", deleteTask)
@@ -53,7 +57,7 @@ func main() {
 }
 
 func getTask(c *gin.Context) {
-	c.Header("Content-Type", "application/json")
+	c.Header("Content-Type", "text/html")
 
 	rows, err := db.Query("SELECT * FROM tasks")
 	if err != nil {
@@ -72,7 +76,8 @@ func getTask(c *gin.Context) {
 	if err := rows.Err(); err != nil {
 		log.Fatal(err)
 	}
-	c.IndentedJSON(http.StatusOK, tasks)
+
+	c.HTML(http.StatusOK, "tasks.html", tasks)
 }
 
 func addTask(c *gin.Context) {
