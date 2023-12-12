@@ -1,8 +1,5 @@
 # Poll the API every X amount of time. If the task is completed, move to completed task table and delete from current task table.
 import requests
-import json
-import time
-import datetime
 
 base_url = "http://10.0.0.5:8080/tasks/"
 
