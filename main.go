@@ -101,7 +101,7 @@ func addTask(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, newTask)
+	c.IndentedJSON(http.StatusCreated, newTask)
 }
 
 func deleteTask(c *gin.Context) {
@@ -142,7 +142,7 @@ func getTaskByID(c *gin.Context) {
 	if err := rows.Err(); err != nil {
 		log.Fatal(err)
 	}
-	c.IndentedJSON(http.StatusOK, t)
+	c.HTML(http.StatusOK, "gettaskid.html", t)
 }
 
 func completeTask(c *gin.Context) {
