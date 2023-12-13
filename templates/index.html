@@ -11,5 +11,69 @@
     <form action="/tasks" method="get">
       <button type="submit" class="btn btn-primary">View Tasks</button>
     </form>
+    <br>
+    <form id="idForm" action="/tasks" method="get">
+        <label for="ID">ID:</label>
+        <input type="text" id="id" name="id" />
+        <input type="submit" value="Submit" /> 
+    </form>
+    <br>
+    <form id="addTask" action="/tasks" method="post">
+      <label for="task">Submit New Task:</label>
+      <input type="text" id="task" name="task" />
+      <label for="hours">Hours to Complete:</label>
+      <input type="number" id="hours" name="hours" min="0" max="100" step="0.1">
+      <label for="urgency">Task Urgency:</label>
+      <input type="text" id="urgency" name="urgency">
+      <input type="submit" value="Submit" />
+    </form>
+
+    <script>
+  document.getElementById("idForm").addEventListener("submit", function (event) {
+    event.preventDefault(); // Prevent the default submission
+    
+    var idValue = document.getElementById("id").value;
+    if (idValue.trim() !== "") {
+      // Manually go to the URL
+      window.location.href = "/tasks/" + encodeURIComponent(idValue);
+    }
+  });
+
+  document.getElementById("addTask").addEventListener("submit", function (event) {
+  event.preventDefault(); // Prevent the default form submission
+  
+  var task = document.getElementById("task").value;
+  var urgency = document.getElementById("urgency").value;
+  var hours = parseFloat(document.getElementById("hours").value);
+
+  // Capture the form data
+  var data = {
+    task: task,
+    urgency: urgency,
+    hours: hours,
+    completed: false
+  };
+
+  // Create the AJAX request
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "/tasks", true);
+  xhr.setRequestHeader("Content-Type", "application/json");
+
+  // Send the collected data as JSON
+  xhr.send(JSON.stringify(data));
+
+  xhr.onloadend = response => {
+    if (xhr.status === 201) {
+      // Clear the form
+      document.getElementById("addTask").reset();
+      alert("Task Added Successfully");
+    } else {
+      alert("Error! Please try again.");
+      console.error(JSON.parse(response));
+    }
+  };
+  });
+
+    </script>
   </body>
 </html>
