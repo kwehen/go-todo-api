@@ -69,13 +69,13 @@
     <br>
     <form id="completed" action="/completed" method="get">
       <label for="completed">Complete a Task with ID:</label>
-      <input type="text" name="id" id="id">
+      <input type="text" name="id" id="completedId">
       <button type="submit" class="btn btn-primary">Complete Task</button>
     </form>    
     <br>
     <form id="idForm" action="/tasks" method="get">
         <label for="ID">Get Task By ID:</label>
-        <input type="text" id="id" name="id" />
+        <input type="text" id="idFormId" name="id" />
         <input type="submit" value="Submit" /> 
     </form>
     <br>
@@ -93,7 +93,7 @@
       document.getElementById("idForm").addEventListener("submit", function (event) {
         event.preventDefault(); // Prevent the default submission
         
-        var idValue = document.getElementById("id").value;
+        var idValue = document.getElementById("idFormId").value;
         if (idValue.trim() !== "") {
           // Manually go to the URL
           window.location.href = "/tasks/" + encodeURIComponent(idValue);
@@ -103,7 +103,7 @@
       document.getElementById("completed").addEventListener("submit", function (event) {
         event.preventDefault(); // Prevent the default submission
 
-        var idValue = document.getElementById("id").value;
+        var idValue = document.getElementById("completedId").value;
 
         // Create the AJAX request
         var xhr = new XMLHttpRequest();
@@ -124,7 +124,6 @@
           }
         };
       });
-
       document.getElementById("addTask").addEventListener("submit", function (event) {
         event.preventDefault(); // Prevent the default form submission
         
