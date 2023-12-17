@@ -57,16 +57,19 @@ jobs:
           repository: 'kwehen/go-todo-argocd'
           token: ${{ secrets.GIT_PASSWORD }}
       - name: Download Tags Artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: tags
+      - name: Set TAG
+        run: export TAG=$(cat ./tags.txt)
+      - name: Print TAG
+        run: echo $TAG
       - name: Modify Images
         run: |
           git config --global user.name "kwehen"
           git config --global user.email "kwesihenry11@gmail.com"
           pwd
           cat todo-manifest.yml
-          TAG=$(cat tags.txt)
           sed -i "s|jeffhardyski/go-to-do-list:.*|jeffhardyski/go-to-do-list:$TAG|g" todo-manifest.yml
           cat todo-manifest.yml
           git add .
