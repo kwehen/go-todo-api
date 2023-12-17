@@ -36,15 +36,17 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
       - name: Create Tag Artifact
+        run: echo "${{ steps.meta.outputs.tags }}" > tags.txt
+      - name: Upload Tag Artifact
         uses: actions/upload-artifact@v2
         with:
-          name: tags
-          path: ./tags.txt
-          retention-days: 1
+            name: tags
+            path: ./tags.txt
+            retention-days: 1
   updategit:
     needs: docker
     runs-on: ubuntu-latest
