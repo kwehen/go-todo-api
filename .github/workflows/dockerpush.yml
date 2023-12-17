@@ -39,6 +39,12 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
+      - name: Create Tag Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: tags
+          path: tags.txt
+          retention-days: 1
   updategit:
     needs: docker
     runs-on: ubuntu-latest
@@ -48,12 +54,17 @@ jobs:
         with:
           repository: 'kwehen/go-todo-argocd'
           token: ${{ secrets.GIT_PASSWORD }}
+      - name: Download Tags Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: tags
       - name: Modify Images
         run: |
           git config --global user.name "kwehen"
           git config --global user.email "kwesihenry11@gmail.com"
           pwd
           cat todo-manifest.yml
+          TAG=$(cat tags.txt)
           sed -i "s|jeffhardyski/go-to-do-list:.*|jeffhardyski/go-to-do-list:$TAG|g" todo-manifest.yml
           cat todo-manifest.yml
           git add .
@@ -62,4 +73,3 @@ jobs:
         env:
             GIT_USERNAME: ${{ secrets.GIT_USERNAME }}
             GIT_PASSWORD: ${{ secrets.GIT_PASSWORD }}
-            TAG: ${{ needs.docker.outputs.tags }}
