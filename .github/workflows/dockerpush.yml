@@ -68,6 +68,7 @@ jobs:
           git config --global user.name "kwehen"
           git config --global user.email "kwesihenry11@gmail.com"
           pwd
+          cd manifest
           cat todo-manifest.yml
           sed -i "s|jeffhardyski/go-to-do-list:.*|$TAG|g" todo-manifest.yml
           cat todo-manifest.yml
