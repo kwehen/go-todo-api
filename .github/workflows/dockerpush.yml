@@ -54,11 +54,12 @@ jobs:
           git config --global user.email "kwesihenry11@gmail.com"
           pwd
           cat todo-manifest.yml
-          sed -i "s|jeffhardyski/go-to-do-list:.*|jeffhardyski/go-to-do-list:${{ needs.docker.outputs.tags }}|g" todo-manifest.yml
+          sed -i "s|jeffhardyski/go-to-do-list:*|jeffhardyski/go-to-do-list:$TAG|g" todo-manifest.yml
           cat todo-manifest.yml
           git add .
-          git commit -m "Completed by GitHub Actions - ${{ needs.docker.outputs.tags }}"
+          git commit -m "Completed by GitHub Actions - $TAG"
           git push
         env:
             GIT_USERNAME: ${{ secrets.GIT_USERNAME }}
             GIT_PASSWORD: ${{ secrets.GIT_PASSWORD }}
+            TAG: ${{ needs.docker.outputs.tags }}
