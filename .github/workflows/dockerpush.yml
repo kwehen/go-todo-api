@@ -42,7 +42,7 @@ jobs:
       - name: Create Tag Artifact
         run: echo "${{ steps.meta.outputs.tags }}" > tags.txt
       - name: Upload Tag Artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
             name: tags
             path: ./tags.txt
