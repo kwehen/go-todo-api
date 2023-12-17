@@ -43,7 +43,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: tags
-          path: tags.txt
+          path: ./tags.txt
           retention-days: 1
   updategit:
     needs: docker
