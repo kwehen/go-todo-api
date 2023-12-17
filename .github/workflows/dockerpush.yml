@@ -54,7 +54,7 @@ jobs:
           git config --global user.email "kwesihenry11@gmail.com"
           pwd
           cat todo-manifest.yml
-          sed -i "s|^\(\s*image:\s*jeffhardyski/go-to-do-list:\).*|\1${{ steps.meta.outputs.tags }}|g" todo-manifest.yml
+          sed -i "s|jeffhardyski/go-to-do-list:.*|jeffhardyski/go-to-do-list:${{ steps.meta.outputs.tags }}|g" todo-manifest.yml
           cat todo-manifest.yml
           git add .
           git commit -m "Completed by GitHub Actions - ${{ steps.meta.outputs.tags }}"
