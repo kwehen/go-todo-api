@@ -40,6 +40,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
   updategit:
+    needs: docker
     runs-on: ubuntu-latest
     steps:
       - name: Update Manifest Repo
