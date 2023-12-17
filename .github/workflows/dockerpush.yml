@@ -39,3 +39,25 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
+  updategit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update Manifest Repo
+        uses: actions/checkout@v3
+        with:
+          repository: 'kwehen/go-todo-argocd'
+          token: ${{ secrets.GIT_PASSWORD }}
+      - name: Modify Images
+        run: |
+          git config --global user.name "kwehen"
+          git config --global user.email "kwesihenry11@gmail.com"
+          pwd
+          cat todo-manifest.yml
+          sed -i "s|jeffhardyski/go-to-do-list:.*|jeffhardyski/go-to-do-list:${{ steps.meta.outputs.tags }}|g" todo-manifest.yml
+          cat todo-manifest.yml
+          git add .
+          git commit -m "Completed by GitHub Actions - ${{ steps.meta.outputs.tags }}"
+          git push
+        env:
+            GIT_USERNAME: ${{ secrets.GIT_USERNAME }}
+            GIT_PASSWORD: ${{ secrets.GIT_PASSWORD }}
