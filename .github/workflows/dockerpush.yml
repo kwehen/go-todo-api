@@ -61,7 +61,7 @@ jobs:
         with:
           name: tags
       - name: Set TAG
-        run: export TAG=$(cat ./tags.txt)
+        run: TAG=$(head -n 1 ./tags.txt)
       - name: Print TAG
         run: echo $TAG
       - name: Modify Images
