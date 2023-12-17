@@ -15,10 +15,8 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          # list of Docker images to use as base name for tags
           images: |
             jeffhardyski/go-to-do-list
-          # generate Docker tags based on the following events/attributes
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
@@ -44,9 +42,10 @@ jobs:
       - name: Upload Tag Artifact
         uses: actions/upload-artifact@v4
         with:
-            name: tags
-            path: ./tags.txt
-            retention-days: 1
+          name: tags
+          path: ./tags.txt
+          retention-days: 1
+
   updategit:
     needs: docker
     runs-on: ubuntu-latest
@@ -76,5 +75,6 @@ jobs:
           git commit -m "Completed by GitHub Actions - $TAG"
           git push
         env:
-            GIT_USERNAME: ${{ secrets.GIT_USERNAME }}
-            GIT_PASSWORD: ${{ secrets.GIT_PASSWORD }}
+          GIT_USERNAME: ${{ secrets.GIT_USERNAME }}
+          GIT_PASSWORD: ${{ secrets.GIT_PASSWORD }}
+          TAG: $TAG
