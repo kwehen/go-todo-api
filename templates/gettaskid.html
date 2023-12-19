@@ -4,16 +4,20 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Task Details</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/gettask.css">
 </head>
 <body>
-    <h1>Task Details</h1>
-    <div>
-        <!-- <p>ID: {{.ID}}</p> -->
-        <p>Task: {{.Task}}</p>
-        <p>Urgency: {{.Urgency}}</p>
-        <p>Hours: {{.Hours}}</p>
-        <p>Completed: {{.Completed}}</p>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Task Details</h1>
+        <div class="task-details">
+            <p class="task-item"><strong>Task:</strong> {{.Task}}</p>
+            <p class="task-item"><strong>Urgency:</strong> {{.Urgency}}</p>
+            <p class="task-item"><strong>Hours:</strong> {{.Hours}}</p>
+            <p class="task-completed">
+                {{if .Completed}}Completed ✓{{else}}Not Completed ✗{{end}}
+            </p>
+        </div>
     </div>
 </body>
 </html>
