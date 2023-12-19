@@ -1,54 +1,71 @@
 @import url("https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css");
+
 body {
     font-family: 'Arial', sans-serif;
     background-color: #f8f9fa;
-    margin: 20px;
-  }
+    padding: 20px;
+}
 
-  h1 {
-    color: black;
-  }
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
 
-  form {
-    margin-bottom: 20px;
-  }
+h1.text-center {
+    color: #343a40;
+    text-align: center;
+    margin-bottom: 40px;
+}
 
-  label {
-    display: block;
-    margin-bottom: 5px;
-    color: black;
-  }
+.task-forms form {
+    margin-bottom: 30px;
+    padding: 20px;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    background-color: white;
+}
 
-  input {
-    width: 100%;
-    padding: 8px;
+label {
+    color: #495057;
+    margin-bottom: 10px;
+}
+
+.form-control {
     margin-bottom: 15px;
-    box-sizing: border-box;
-  }
+    border-radius: 5px;
+}
 
-  button, input[type="submit"] {
-    background-color: #007bff;
-    color: #fff;
-    padding: 10px 15px;
-    border: none;
-    cursor: pointer;
-  }
+.btn {
+    width: 100%;
+    border-radius: 5px;
+    padding: 10px;
+    font-size: 16px;
+}
 
-  button:hover, input[type="submit"]:hover {
-    background-color: #0056b3;
-  }
+.btn-block {
+    margin-bottom: 20px;
+}
 
-  input[type="number"] {
-    width: 50%;
-  }
+.btn-success {
+    background-color: #28a745;
+}
 
-  /* Make the form smaller */
-  #addTask, #idForm, #completed {
-    max-width: 600px;
-  }
+.btn-info {
+    background-color: #17a2b8;
+}
 
-  /* #idForm {
-    max-width: 600px;
-  } */
+/* Customizations for specific forms */
+.complete-task .btn, .get-task input[type="submit"] {
+    margin-top: 10px;
+}
 
-  /* Add more styles as needed */
+.add-task select, .add-task input[type="number"] {
+    width: auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+}
