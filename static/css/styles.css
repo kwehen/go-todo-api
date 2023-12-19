@@ -35,6 +35,24 @@ label {
     border-radius: 5px;
 }
 
+/* Custom styles for the select element */
+.form-control-select {
+    appearance: none; /* Remove default styling */
+    -webkit-appearance: none; /* For Safari */
+    -moz-appearance: none; /* For Firefox */
+    background-image: url('data:image/svg+xml;utf8,<svg fill="black" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>'); /* SVG arrow icon */
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 30px; /* Add padding to make space for the arrow */
+}
+
+/* Optional: style for when the select box is focused */
+.form-control-select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
 .btn {
     width: 100%;
     border-radius: 5px;
