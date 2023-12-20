@@ -1,0 +1,72 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f4f4;
+}
+
+.container {
+    width: 90%; /* Increased width */
+    max-width: 1200px; /* Increased maximum width */
+    margin: auto;
+    overflow: hidden;
+}
+
+h1.text-center {
+    color: #333;
+    margin-bottom: 1em;
+    text-align: center;
+}
+
+.table {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    width: 100%; /* Ensure table uses full container width */
+}
+
+.table thead {
+    background-color: #007bff;
+    color: #fff;
+}
+
+.table thead th {
+    padding: 15px; /* Increase padding for larger table headers */
+}
+
+.table tbody td {
+    padding: 12px; /* Increase padding for table cells */
+    color: #555;
+}
+
+/* Row Coloring Based on Urgency */
+.table tbody tr[data-urgency="High"] {
+    background-color: #f8a8a8; /* Light red for high urgency */
+}
+
+.table tbody tr[data-urgency="Medium"] {
+    background-color: #f5eeb1; /* Light yellow for medium urgency */
+}
+
+.table tbody tr[data-urgency="Low"] {
+    background-color: #8dee9b; /* Light green for low urgency */
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f2f2f2;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container {
+        width: 95%; /* Adjust for smaller screens */
+    }
+
+    .table thead th, .table tbody td {
+        padding: 8px; /* Smaller padding on smaller screens */
+    }
+}

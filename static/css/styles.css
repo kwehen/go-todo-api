@@ -53,6 +53,10 @@ label {
     box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
 }
 
+.form-control::placeholder {
+    opacity: 0.5;
+}
+
 .btn {
     width: 100%;
     border-radius: 5px;
@@ -70,6 +74,10 @@ label {
 
 .btn-info {
     background-color: #17a2b8;
+}
+
+.btn-complete {
+    background-color: #ffc107;
 }
 
 /* Customizations for specific forms */

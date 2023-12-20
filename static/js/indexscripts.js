@@ -25,7 +25,7 @@ document.getElementById("idForm").addEventListener("submit", function (event) {
       if (xhr.status === 200) {
         // Clear the form
         document.getElementById("completed").reset();
-        alert("Task Completed Successfully");
+        alert("Task Completed and Moved to Completed Table");
       } else {
         alert("Error! Please try again.");
         console.error(JSON.parse(response));

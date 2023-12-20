@@ -50,7 +50,8 @@ func main() {
 	router.GET("/tasks/:id", getTaskByID)
 	router.DELETE("/delete/:id", deleteTask)
 	router.POST("/tasks", addTask)
-	router.GET("/completed/:id", completeTask)
+	// router.GET("/completed/:id", completeTask)
+	router.GET("/completed/:id", completeTaskDeleteFromTasks)
 	router.POST("/completed/:id", addToCompletedTable)
 	router.GET("/completed", getCompletedTasks)
 
@@ -146,24 +147,69 @@ func getTaskByID(c *gin.Context) {
 	c.HTML(http.StatusOK, "gettaskid.html", t)
 }
 
-func completeTask(c *gin.Context) {
+// func completeTask(c *gin.Context) {
+// 	id := c.Param("id")
+
+// 	stmt, err := db.Prepare("UPDATE tasks SET completed = true WHERE task_id = $1")
+// 	if err != nil {
+// 		log.Println("Error preparing SQL statement:", err)
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+// 		return
+// 	}
+// 	defer stmt.Close()
+
+// 	if _, err := stmt.Exec(id); err != nil {
+// 		log.Println("Error executing SQL statement:", err)
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+// 		return
+// 	}
+
+// 	c.IndentedJSON(http.StatusOK, gin.H{"message": "Task completed"})
+// }
+
+func completeTaskDeleteFromTasks(c *gin.Context) {
 	id := c.Param("id")
 
-	stmt, err := db.Prepare("UPDATE tasks SET completed = true WHERE task_id = $1")
+	// Start a transaction
+	tx, err := db.Begin()
 	if err != nil {
-		log.Println("Error preparing SQL statement:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-		return
-	}
-	defer stmt.Close()
-
-	if _, err := stmt.Exec(id); err != nil {
-		log.Println("Error executing SQL statement:", err)
+		log.Println("Error starting transaction:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, gin.H{"message": "Task completed"})
+	// First SQL command: Update
+	if _, err := tx.Exec("UPDATE tasks SET completed = true WHERE task_id = $1", id); err != nil {
+		tx.Rollback()
+		log.Println("Error executing update statement:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		return
+	}
+
+	// Second SQL command: Insert
+	if _, err := tx.Exec("INSERT INTO completed(task) SELECT task FROM tasks WHERE task_id = $1", id); err != nil {
+		tx.Rollback()
+		log.Println("Error executing insert statement:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		return
+	}
+
+	// Third SQL command: Delete
+	if _, err := tx.Exec("DELETE FROM tasks WHERE task_id = $1", id); err != nil {
+		tx.Rollback()
+		log.Println("Error executing delete statement:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		return
+	}
+
+	// Commit the transaction
+	if err := tx.Commit(); err != nil {
+		log.Println("Error committing transaction:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "Task completed, deleted from tasks table, and added to completed table"})
 }
 
 func addToCompletedTable(c *gin.Context) {
@@ -187,7 +233,7 @@ func addToCompletedTable(c *gin.Context) {
 }
 
 func getCompletedTasks(c *gin.Context) {
-	c.Header("Content-Type", "application/json")
+	c.Header("Content-Type", "text/html")
 
 	rows, err := db.Query("SELECT * FROM completed")
 	if err != nil {
@@ -206,7 +252,5 @@ func getCompletedTasks(c *gin.Context) {
 	if err := rows.Err(); err != nil {
 		log.Fatal(err)
 	}
-	c.IndentedJSON(http.StatusOK, tasks)
+	c.HTML(http.StatusOK, "completed.html", tasks)
 }
-
-// showing sheldon

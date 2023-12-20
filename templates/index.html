@@ -15,8 +15,8 @@
             </form>
 
             <form id="completed" action="/completed" method="get" class="complete-task">
-                <label for="completed">Complete a Task with ID:</label>
-                <input type="text" name="id" id="completedId" class="form-control">
+                <label for="completed">Complete & Delete a Task:</label>
+                <input type="text" name="id" id="completedId" placeholder="ID" class="form-control">
                 <button type="submit" class="btn btn-success">Complete Task</button>
             </form>
 
@@ -24,6 +24,10 @@
                 <label for="ID">Get Task By ID:</label>
                 <input type="text" id="idFormId" name="id" class="form-control" />
                 <input type="submit" value="Submit" class="btn btn-info" />
+            </form>
+
+            <form id="showCompleted" action="/completed" method="get">
+                <button type="submit" class="btn btn-complete btn-block">Show Completed Tasks</button>
             </form>
 
             <form id="addTask" action="/tasks" method="post" class="add-task">

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Completed Tasks</title>
+    <link rel="stylesheet" href="/static/css/completed.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4"><b><a href="/" style="text-decoration:none; color: #104782;">Completed Tasks</a></b></h1>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Task</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .}}
+                        <tr>
+                            <td>{{.ID}}</td>
+                            <td>{{.Task}}</td>
+                        </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
