@@ -8,3 +8,4 @@ docker-compose3.yml
 main
 gok3sdeploy.yml
 go-todo-api
+ignorethis.txt
