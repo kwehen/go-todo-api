@@ -147,26 +147,6 @@ func getTaskByID(c *gin.Context) {
 	c.HTML(http.StatusOK, "gettaskid.html", t)
 }
 
-// func completeTask(c *gin.Context) {
-// 	id := c.Param("id")
-
-// 	stmt, err := db.Prepare("UPDATE tasks SET completed = true WHERE task_id = $1")
-// 	if err != nil {
-// 		log.Println("Error preparing SQL statement:", err)
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-// 		return
-// 	}
-// 	defer stmt.Close()
-
-// 	if _, err := stmt.Exec(id); err != nil {
-// 		log.Println("Error executing SQL statement:", err)
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-// 		return
-// 	}
-
-// 	c.IndentedJSON(http.StatusOK, gin.H{"message": "Task completed"})
-// }
-
 func completeTaskDeleteFromTasks(c *gin.Context) {
 	id := c.Param("id")
 
