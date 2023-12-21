@@ -51,6 +51,7 @@ func main() {
 	router.DELETE("/delete/:id", deleteTask)
 	router.POST("/tasks", addTask)
 	// router.GET("/completed/:id", completeTask)
+	router.POST("/completeTask/:id", completeTask)
 	router.GET("/completed/:id", completeTaskDeleteFromTasks)
 	router.POST("/completed/:id", addToCompletedTable)
 	router.GET("/completed", getCompletedTasks)
@@ -190,6 +191,26 @@ func completeTaskDeleteFromTasks(c *gin.Context) {
 	}
 
 	c.IndentedJSON(http.StatusOK, gin.H{"message": "Task completed, deleted from tasks table, and added to completed table"})
+}
+
+func completeTask(c *gin.Context) {
+	id := c.Param("id")
+
+	stmt, err := db.Prepare("UPDATE tasks SET completed = true WHERE task_id = $1")
+	if err != nil {
+		log.Println("Error preparing SQL statement:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		return
+	}
+	defer stmt.Close()
+
+	if _, err := stmt.Exec(id); err != nil {
+		log.Println("Error executing SQL statement:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "Task completed"})
 }
 
 func addToCompletedTable(c *gin.Context) {
