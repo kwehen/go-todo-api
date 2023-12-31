@@ -9,3 +9,4 @@ main
 gok3sdeploy.yml
 go-todo-api
 ignorethis.txt
+.DS_Store
