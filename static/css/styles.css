@@ -89,6 +89,18 @@ label {
     width: auto;
 }
 
+.google-btn {
+    display: inline-block;
+    background: #4285f4;
+    color: white;
+    width: 200px;
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+    text-decoration: none;
+    font-weight: bold;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .container {

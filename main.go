@@ -1,12 +1,18 @@
 package main
 
 import (
+	"context"
+	"crypto/rand"
 	"database/sql"
+	"encoding/base64"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kwehen/go-todo-api/internal/auth"
 	_ "github.com/lib/pq"
+	"github.com/markbates/goth/gothic"
 )
 
 type task struct {
@@ -22,7 +28,28 @@ type completed struct {
 	Task string `json:"task"`
 }
 
+type User struct {
+	RawData           map[string]interface{}
+	Provider          string
+	Email             string
+	Name              string
+	FirstName         string
+	LastName          string
+	NickName          string
+	Description       string
+	UserID            string
+	AvatarURL         string
+	Location          string
+	AccessToken       string
+	AccessTokenSecret string
+	RefreshToken      string
+	ExpiresAt         time.Time
+	IDToken           string
+}
+
 var db *sql.DB
+
+var sessionStore = make(map[string]string)
 
 func main() {
 	var err error
@@ -40,22 +67,32 @@ func main() {
 		log.Fatal(err)
 	}
 
+	auth.NewAuth()
 	router := gin.Default()
 	router.LoadHTMLGlob("templates/*")
 	router.Static("/static", "./static")
 	router.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.html", nil)
+		c.HTML(http.StatusOK, "login.html", nil)
 	})
-	router.GET("/tasks", getTask)
-	router.GET("/tasks/:id", getTaskByID)
-	router.DELETE("/delete/:id", deleteTask)
-	router.POST("/tasks", addTask)
-	// router.GET("/completed/:id", completeTask)
-	router.POST("/completeTask/:id", completeTask)
-	router.GET("/completed/:id", completeTaskDeleteFromTasks)
-	router.POST("/completed/:id", addToCompletedTable)
-	router.GET("/completed", getCompletedTasks)
-
+	authorized := router.Group("/")
+	authorized.Use(auth.AuthMiddleware())
+	{
+		authorized.GET("/home", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "index.html", nil)
+		})
+		authorized.GET("/tasks", getTask)
+		authorized.GET("/tasks/:id", getTaskByID)
+		authorized.DELETE("/delete/:id", deleteTask)
+		authorized.POST("/tasks", addTask)
+		authorized.POST("/completeTask/:id", completeTask)
+		authorized.GET("/completed/:id", completeTaskDeleteFromTasks)
+		authorized.POST("/completed/:id", addToCompletedTable)
+		authorized.GET("/completed", getCompletedTasks)
+		router.GET("/auth/:provider", handleGoogleAuth)
+		router.GET("/auth/:provider/callback", handleGoogleCallback)
+		router.GET("/logout", googleLogout)
+		router.GET("/login", googleLogin)
+	}
 	router.Run("0.0.0.0:8080")
 }
 
@@ -254,4 +291,99 @@ func getCompletedTasks(c *gin.Context) {
 		log.Fatal(err)
 	}
 	c.HTML(http.StatusOK, "completed.html", tasks)
+}
+
+// func handleGoogleAuth(c *gin.Context) {
+// 	gothic.BeginAuthHandler(c.Writer, c.Request)
+// }
+
+func handleGoogleAuth(c *gin.Context) {
+	provider := c.Param("provider")
+
+	r := c.Request.WithContext(context.WithValue(c.Request.Context(), gothic.ProviderParamKey, provider))
+	gothic.BeginAuthHandler(c.Writer, r) // Use the new request r here
+}
+
+// func googleAuth(c *gin.Context) {
+// 	err := gothic.BeginAuthHandler(c.Writer, c.Request)
+// 	if err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+// 		return
+// 	}
+// }
+
+func handleGoogleCallback(c *gin.Context) {
+	provider := c.Param("provider")
+	w := c.Writer
+	r := c.Request
+
+	r = r.WithContext(context.WithValue(r.Context(), gothic.ProviderParamKey, provider))
+	// Set the provider in the request context
+
+	user, err := gothic.CompleteUserAuth(w, r)
+	if err != nil {
+		log.Println("Error during CompleteUserAuth:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Generate a secure random string for the session token
+	b := make([]byte, 32)
+	_, err = rand.Read(b)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	sessionToken := base64.StdEncoding.EncodeToString(b)
+
+	// // Store the session token and OAuth token in your database
+	// storeSession(sessionToken, user.AccessToken)
+
+	// Set a secure cookie with the session token
+	c.SetCookie("user", sessionToken, 3600, "/", ".kamaufoundation.com", true, true)
+
+	log.Println("Logged in as:", user.Name)
+	log.Println("Email:", user.Email)
+	c.Redirect(http.StatusMovedPermanently, "/home")
+}
+
+func googleLogout(c *gin.Context) {
+	gothic.Logout(c.Writer, c.Request)
+
+	// Get the session token from the cookie
+	// sessionToken, err := c.Cookie("user")
+	// if err != nil {
+	// 	c.Error(err)
+	// 	return
+	// }
+
+	// // Delete the session from your database
+	// // Assuming you have a function deleteSession that does this
+	// deleteSession(sessionToken)
+
+	c.SetCookie("user", "", -1, "/", ".kamaufoundation.com", true, true)
+	c.Redirect(http.StatusTemporaryRedirect, "/")
+}
+
+func googleLogin(c *gin.Context) {
+	// try to get the user without re-authenticating
+	if gothUser, err := gothic.CompleteUserAuth(c.Writer, c.Request); err == nil {
+		c.JSON(200, gin.H{"user": gothUser})
+	} else {
+		gothic.BeginAuthHandler(c.Writer, c.Request)
+	}
+}
+
+func storeSession(sessionToken string, oauthToken string) {
+	sessionStore[sessionToken] = oauthToken
+}
+
+func deleteSession(sessionToken string) {
+	delete(sessionStore, sessionToken)
+}
+
+func getOAuthToken(sessionToken string) (string, bool) {
+	oauthToken, exists := sessionStore[sessionToken]
+	return oauthToken, exists
 }

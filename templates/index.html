@@ -13,7 +13,6 @@
             <form action="/tasks" method="get" class="view-tasks">
                 <button type="submit" class="btn btn-primary btn-block">View Tasks</button>
             </form>
-
             <form id="completed" action="/completed" method="get" class="complete-task">
                 <label for="completed">Complete & Delete a Task:</label>
                 <input type="text" name="id" id="completedId" placeholder="ID" class="form-control">
@@ -42,6 +41,9 @@
                     <option value="Low">Low</option>
                 </select>
                 <input type="submit" value="Submit" class="btn btn-primary" />
+            </form>
+            <form action="/logout" method="get" class="logout">
+                <button type="submit" class="btn btn-danger btn-block">Logout</button>
             </form>
         </div>
     </div>
