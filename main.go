@@ -67,7 +67,7 @@ func main() {
 	// Open a connection to the database
 	db, err = sql.Open("postgres", dbConnectionString)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Error opening database: %v\n", err)
 	}
 
 	auth.NewAuth()
@@ -107,23 +107,36 @@ func getTask(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "No email cookie found"})
 		return
 	}
-
-	rows, err := db.Query("SELECT * FROM tasks WHERE user_id = $1", email)
+	// decrypt email
+	decryptedEmail, err := auth.Decrypt(email, os.Getenv("SECRET_KEY"))
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Error decrypting email: %v\n", err)
+	}
+
+	rows, err := db.Query("SELECT * FROM tasks WHERE user_id = $1", decryptedEmail)
+	if err != nil {
+		log.Printf("Error querying database: %v\n", err)
 	}
 	defer rows.Close()
+
+	// decrypt task before displaying
 
 	var tasks []task
 	for rows.Next() {
 		var t task
 		if err := rows.Scan(&t.ID, &t.Task, &t.Urgency, &t.Hours, &t.Completed, &t.UserID); err != nil {
-			log.Fatal(err)
+			log.Printf("Error scanning rows: %v\n", err)
 		}
+
+		decryptedTask, err := auth.Decrypt(t.Task, os.Getenv("SECRET_KEY"))
+		if err != nil {
+			log.Printf("Error decrypting task: %v\n", err)
+		}
+		t.Task = decryptedTask
 		tasks = append(tasks, t)
 	}
 	if err := rows.Err(); err != nil {
-		log.Fatal(err)
+		log.Printf("Error iterating over rows: %v\n", err)
 	}
 
 	c.HTML(http.StatusOK, "tasks.html", tasks)
@@ -159,7 +172,19 @@ func addTask(c *gin.Context) {
 	}
 	defer stmt.Close()
 
-	if _, err := stmt.Exec(newTask.Task, newTask.Urgency, newTask.Hours, newTask.Completed, newTask.UserID); err != nil {
+	// encrypt task before inserting into database
+	encryptedTask, err := auth.Encrypt(newTask.Task, os.Getenv("SECRET_KEY"))
+	if err != nil {
+		log.Println("Error encrypting task:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		return
+	}
+	decryptedEmail, err := auth.Decrypt(email, os.Getenv("SECRET_KEY"))
+	if err != nil {
+		log.Printf("Error decrypting email: %v\n", err)
+	}
+
+	if _, err := stmt.Exec(encryptedTask, newTask.Urgency, newTask.Hours, newTask.Completed, decryptedEmail); err != nil {
 		log.Println("Error executing SQL statement:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 		return
@@ -192,18 +217,18 @@ func getTaskByID(c *gin.Context) {
 
 	rows, err := db.Query("SELECT * FROM tasks WHERE task_id = $1", id)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Error querying database: %v\n", err)
 	}
 	defer rows.Close()
 
 	var t task
 	for rows.Next() {
 		if err := rows.Scan(&t.ID, &t.Task, &t.Urgency, &t.Hours, &t.Completed); err != nil {
-			log.Fatal(err)
+			log.Printf("Error scanning rows: %v\n", err)
 		}
 	}
 	if err := rows.Err(); err != nil {
-		log.Fatal(err)
+		log.Printf("Error iterating over rows: %v\n", err)
 	}
 	c.HTML(http.StatusOK, "gettaskid.html", t)
 }
@@ -298,7 +323,7 @@ func getCompletedTasks(c *gin.Context) {
 
 	rows, err := db.Query("SELECT * FROM completed")
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Error querying database: %v\n", err)
 	}
 	defer rows.Close()
 
@@ -306,12 +331,12 @@ func getCompletedTasks(c *gin.Context) {
 	for rows.Next() {
 		var t completed
 		if err := rows.Scan(&t.ID, &t.Task); err != nil {
-			log.Fatal(err)
+			log.Printf("Error scanning rows: %v\n", err)
 		}
 		tasks = append(tasks, t)
 	}
 	if err := rows.Err(); err != nil {
-		log.Fatal(err)
+		log.Printf("Error iterating over rows: %v\n", err)
 	}
 	c.HTML(http.StatusOK, "completed.html", tasks)
 }
@@ -360,14 +385,20 @@ func handleGoogleCallback(c *gin.Context) {
 
 	sessionToken := base64.StdEncoding.EncodeToString(b)
 	// encryptedEmail := auth.Encrypt(user.Email, os.Getenv("SECRET_KEY"))
+	encryptedEmail, err := auth.Encrypt(user.Email, os.Getenv("SECRET_KEY"))
+	if err != nil {
+		log.Println("Error encrypting email:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		return
+	}
 	// // Store the session token and OAuth token in your database
 	// storeSession(sessionToken, user.AccessToken)
 
 	// Set a secure cookie with the session token
-	c.SetCookie("user", sessionToken, 3600, "/", ".kamaufoundation.com", true, true)
-	c.SetCookie("email", user.Email, 3600, "/", ".kamaufoundation.com", true, true)
-	// c.SetCookie("user", sessionToken, 3600, "/", "localhost", true, true)
-	// c.SetCookie("email", user.Email, 3600, "/", "localhost", true, true)
+	// c.SetCookie("user", sessionToken, 3600, "/", ".kamaufoundation.com", true, true)
+	// c.SetCookie("email", user.Email, 3600, "/", ".kamaufoundation.com", true, true)
+	c.SetCookie("user", sessionToken, 3600, "/", "localhost", true, true)
+	c.SetCookie("email", encryptedEmail, 3600, "/", "localhost", true, true)
 
 	log.Println("Logged in as:", user.Name)
 	log.Println("Email:", user.Email)
@@ -388,9 +419,9 @@ func googleLogout(c *gin.Context) {
 	// // Assuming you have a function deleteSession that does this
 	// deleteSession(sessionToken)
 
-	c.SetCookie("user", "", -1, "/", ".kamaufoundation.com", true, true)
-	c.SetCookie("email", "", -1, "/", ".kamaufoundation.com", true, true)
-	// c.SetCookie("user", "", -1, "/", "localhost", true, true)
+	// c.SetCookie("user", "", -1, "/", ".kamaufoundation.com", true, true)
+	// c.SetCookie("email", "", -1, "/", ".kamaufoundation.com", true, true)
+	c.SetCookie("user", "", -1, "/", "localhost", true, true)
 	c.Redirect(http.StatusTemporaryRedirect, "/")
 }
 

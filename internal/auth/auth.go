@@ -1,6 +1,12 @@
 package auth
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"encoding/base64"
+	"errors"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -41,8 +47,8 @@ func NewAuth() {
 	googleClientSecret := os.Getenv("GOOGLE_CLIENT_SECRET")
 
 	goth.UseProviders(
-		google.New(googleClientId, googleClientSecret, "https://test.home.kamaufoundation.com/auth/google/callback", "email", "profile"),
-		// google.New(googleClientId, googleClientSecret, "http://localhost:8080/auth/google/callback", "email", "profile"),
+		// google.New(googleClientId, googleClientSecret, "https://test.home.kamaufoundation.com/auth/google/callback", "email", "profile"),
+		google.New(googleClientId, googleClientSecret, "http://localhost:8080/auth/google/callback", "email", "profile"),
 	)
 }
 
@@ -64,54 +70,64 @@ func AuthMiddleware() gin.HandlerFunc {
 	}
 }
 
-// func Encrypt(stringToEncrypt string, keyString string) (encryptedString string) {
-// 	// Since the key is in string, we need to convert decode it to bytes
-// 	key, _ := base64.StdEncoding.DecodeString(keyString)
-// 	plaintext := []byte(stringToEncrypt)
+func Encrypt(plainText string, key string) (string, error) {
+	// Convert the key to bytes
+	keyBytes := []byte(key)
 
-// 	// Create a new Cipher Block from the key
-// 	block, err := aes.NewCipher(key)
-// 	if err != nil {
-// 		panic(err.Error())
-// 	}
+	// Create a new cipher block
+	block, err := aes.NewCipher(keyBytes)
+	if err != nil {
+		return "", err
+	}
 
-// 	// Create a new GCM
-// 	aesGCM, err := cipher.NewGCM(block)
-// 	if err != nil {
-// 		panic(err.Error())
-// 	}
+	// Create a new GCM
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
 
-// 	// Create a nonce. Nonce should be from GCM
-// 	nonce := make([]byte, aesGCM.NonceSize())
-// 	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
-// 		panic(err.Error())
-// 	}
+	// Create a new nonce
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+		return "", err
+	}
 
-// 	// Encrypt the data using aesGCM.Seal
-// 	ciphertext := aesGCM.Seal(nonce, nonce, plaintext, nil)
-// 	return base64.StdEncoding.EncodeToString(ciphertext)
-// }
+	// Encrypt the data
+	ciphertext := gcm.Seal(nonce, nonce, []byte(plainText), nil)
 
-// func Decrypt(encryptedString string, keyString string) (decryptedString string) {
-// 	key, _ := base64.StdEncoding.DecodeString(keyString)
-// 	enc, _ := base64.StdEncoding.DecodeString(encryptedString)
+	// Base64 encode the ciphertext
+	return base64.StdEncoding.EncodeToString(ciphertext), nil
+}
 
-// 	block, err := aes.NewCipher(key)
-// 	if err != nil {
-// 		panic(err.Error())
-// 	}
+func Decrypt(encryptedString string, keyString string) (string, error) {
+	// Convert the key to bytes directly, without base64 decoding
+	key := []byte(keyString)
 
-// 	aesGCM, err := cipher.NewGCM(block)
-// 	if err != nil {
-// 		panic(err.Error())
-// 	}
+	enc, err := base64.StdEncoding.DecodeString(encryptedString)
+	if err != nil {
+		return "", err
+	}
 
-// 	nonceSize := aesGCM.NonceSize()
-// 	nonce, ciphertext := enc[:nonceSize], enc[nonceSize:]
-// 	plaintext, err := aesGCM.Open(nil, nonce, ciphertext, nil)
-// 	if err != nil {
-// 		panic(err.Error())
-// 	}
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
 
-// 	return string(plaintext)
-// }
+	aesGCM, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+
+	nonceSize := aesGCM.NonceSize()
+	if len(enc) < nonceSize {
+		return "", errors.New("ciphertext too short")
+	}
+
+	nonce, ciphertext := enc[:nonceSize], enc[nonceSize:]
+	plaintext, err := aesGCM.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return "", err
+	}
+
+	return string(plaintext), nil
+}
