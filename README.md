@@ -8,5 +8,5 @@ The workflows in the project are build and push changes to Docker hub while upda
 ![CI/CD architecture](https://github.com/kwehen/go-todo-api/assets/110314567/3b36f848-8874-49c6-94f6-fce4b2f99236)
 
 ---
-The rest of the code is what went into making this project work. SQL files for creating the tables, Dockerfile for testing the creation of the image, and more. The application is hosted internally. But if you want to see it, reach out and I will let you take a look. 
-P.S. If I ever feel like adding auth and database sessions I will make this a pubic service. PR coming...
+Update:
+I've added OAUTH and changed the database schema. I'm hoping to make this publically available for some friends and whoever else to use. I'm tightening up security before releasing, and I hope to add features that users see are needed.
