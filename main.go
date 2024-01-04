@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -21,6 +22,7 @@ type task struct {
 	Urgency   string  `json:"urgency"`
 	Hours     float64 `json:"hours"`
 	Completed bool    `json:"completed"`
+	UserID    string  `json:"user_id"`
 }
 
 type completed struct {
@@ -53,13 +55,14 @@ var sessionStore = make(map[string]string)
 
 func main() {
 	var err error
-	// dbUser := os.Getenv("DB_USER")
-	// dbPassword := os.Getenv("DB_PASSWORD")
-	// dbName := os.Getenv("DB_NAME")
-	// dbHost := os.Getenv("DB_HOST")
-	// dbPort := os.Getenv("DB_PORT")
+	dbUser := os.Getenv("DB_USER")
+	dbPassword := os.Getenv("DB_PASSWORD")
+	dbName := os.Getenv("DB_NAME")
+	dbHost := os.Getenv("DB_HOST")
+	dbPort := os.Getenv("DB_PORT")
 
-	dbConnectionString := "postgres://postgres:postgres@10.0.0.9:5432/postgres?sslmode=disable"
+	// dbConnectionString := "postgres://postgres:postgres@10.0.0.8:5432/postgres?sslmode=disable"
+	dbConnectionString := "postgres://" + dbUser + ":" + dbPassword + "@" + dbHost + ":" + dbPort + "/" + dbName + "?sslmode=disable"
 
 	// Open a connection to the database
 	db, err = sql.Open("postgres", dbConnectionString)
@@ -98,8 +101,14 @@ func main() {
 
 func getTask(c *gin.Context) {
 	c.Header("Content-Type", "text/html")
+	email, err := c.Cookie("email")
+	if err != nil {
+		// Handle error
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No email cookie found"})
+		return
+	}
 
-	rows, err := db.Query("SELECT * FROM tasks")
+	rows, err := db.Query("SELECT * FROM tasks WHERE user_id = $1", email)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -108,7 +117,7 @@ func getTask(c *gin.Context) {
 	var tasks []task
 	for rows.Next() {
 		var t task
-		if err := rows.Scan(&t.ID, &t.Task, &t.Urgency, &t.Hours, &t.Completed); err != nil {
+		if err := rows.Scan(&t.ID, &t.Task, &t.Urgency, &t.Hours, &t.Completed, &t.UserID); err != nil {
 			log.Fatal(err)
 		}
 		tasks = append(tasks, t)
@@ -127,7 +136,22 @@ func addTask(c *gin.Context) {
 		return
 	}
 
-	stmt, err := db.Prepare("INSERT INTO tasks(task, urgency, hours, completed) VALUES($1, $2, $3, $4)")
+	// for key, value := range c.Keys {
+	//     fmt.Printf("Key: %s, Value: %v\n", key, value)
+	// }
+	email, err := c.Cookie("email")
+	if err != nil {
+		// Handle error
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No email cookie found"})
+		return
+	}
+	// Get user ID from context
+	// user := c.MustGet("user").(string)
+	// email := c.MustGet("email").(string)
+	// Add user ID to newTask
+	newTask.UserID = email
+
+	stmt, err := db.Prepare("INSERT INTO tasks(task, urgency, hours, completed, user_id) VALUES($1, $2, $3, $4, $5)")
 	if err != nil {
 		log.Println("Error preparing SQL statement:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
@@ -135,7 +159,7 @@ func addTask(c *gin.Context) {
 	}
 	defer stmt.Close()
 
-	if _, err := stmt.Exec(newTask.Task, newTask.Urgency, newTask.Hours, newTask.Completed); err != nil {
+	if _, err := stmt.Exec(newTask.Task, newTask.Urgency, newTask.Hours, newTask.Completed, newTask.UserID); err != nil {
 		log.Println("Error executing SQL statement:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 		return
@@ -143,7 +167,6 @@ func addTask(c *gin.Context) {
 
 	c.IndentedJSON(http.StatusCreated, newTask)
 }
-
 func deleteTask(c *gin.Context) {
 	id := c.Param("id")
 
@@ -336,12 +359,15 @@ func handleGoogleCallback(c *gin.Context) {
 	}
 
 	sessionToken := base64.StdEncoding.EncodeToString(b)
-
+	// encryptedEmail := auth.Encrypt(user.Email, os.Getenv("SECRET_KEY"))
 	// // Store the session token and OAuth token in your database
 	// storeSession(sessionToken, user.AccessToken)
 
 	// Set a secure cookie with the session token
 	c.SetCookie("user", sessionToken, 3600, "/", ".kamaufoundation.com", true, true)
+	c.SetCookie("email", user.Email, 3600, "/", ".kamaufoundation.com", true, true)
+	// c.SetCookie("user", sessionToken, 3600, "/", "localhost", true, true)
+	// c.SetCookie("email", user.Email, 3600, "/", "localhost", true, true)
 
 	log.Println("Logged in as:", user.Name)
 	log.Println("Email:", user.Email)
@@ -363,6 +389,8 @@ func googleLogout(c *gin.Context) {
 	// deleteSession(sessionToken)
 
 	c.SetCookie("user", "", -1, "/", ".kamaufoundation.com", true, true)
+	c.SetCookie("email", "", -1, "/", ".kamaufoundation.com", true, true)
+	// c.SetCookie("user", "", -1, "/", "localhost", true, true)
 	c.Redirect(http.StatusTemporaryRedirect, "/")
 }
 

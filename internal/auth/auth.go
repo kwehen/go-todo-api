@@ -42,6 +42,7 @@ func NewAuth() {
 
 	goth.UseProviders(
 		google.New(googleClientId, googleClientSecret, "https://test.home.kamaufoundation.com/auth/google/callback", "email", "profile"),
+		// google.New(googleClientId, googleClientSecret, "http://localhost:8080/auth/google/callback", "email", "profile"),
 	)
 }
 
@@ -62,3 +63,55 @@ func AuthMiddleware() gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+// func Encrypt(stringToEncrypt string, keyString string) (encryptedString string) {
+// 	// Since the key is in string, we need to convert decode it to bytes
+// 	key, _ := base64.StdEncoding.DecodeString(keyString)
+// 	plaintext := []byte(stringToEncrypt)
+
+// 	// Create a new Cipher Block from the key
+// 	block, err := aes.NewCipher(key)
+// 	if err != nil {
+// 		panic(err.Error())
+// 	}
+
+// 	// Create a new GCM
+// 	aesGCM, err := cipher.NewGCM(block)
+// 	if err != nil {
+// 		panic(err.Error())
+// 	}
+
+// 	// Create a nonce. Nonce should be from GCM
+// 	nonce := make([]byte, aesGCM.NonceSize())
+// 	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+// 		panic(err.Error())
+// 	}
+
+// 	// Encrypt the data using aesGCM.Seal
+// 	ciphertext := aesGCM.Seal(nonce, nonce, plaintext, nil)
+// 	return base64.StdEncoding.EncodeToString(ciphertext)
+// }
+
+// func Decrypt(encryptedString string, keyString string) (decryptedString string) {
+// 	key, _ := base64.StdEncoding.DecodeString(keyString)
+// 	enc, _ := base64.StdEncoding.DecodeString(encryptedString)
+
+// 	block, err := aes.NewCipher(key)
+// 	if err != nil {
+// 		panic(err.Error())
+// 	}
+
+// 	aesGCM, err := cipher.NewGCM(block)
+// 	if err != nil {
+// 		panic(err.Error())
+// 	}
+
+// 	nonceSize := aesGCM.NonceSize()
+// 	nonce, ciphertext := enc[:nonceSize], enc[nonceSize:]
+// 	plaintext, err := aesGCM.Open(nil, nonce, ciphertext, nil)
+// 	if err != nil {
+// 		panic(err.Error())
+// 	}
+
+// 	return string(plaintext)
+// }
