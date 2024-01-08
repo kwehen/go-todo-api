@@ -12,7 +12,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kwehen/go-todo-api/internal/auth"
-	"github.com/kwehen/go-todo-api/internal/endpoints"
 	_ "github.com/lib/pq"
 	"github.com/markbates/goth/gothic"
 )
@@ -85,14 +84,14 @@ func main() {
 		authorized.GET("/home", func(c *gin.Context) {
 			c.HTML(http.StatusOK, "index.html", nil)
 		})
-		authorized.GET("/tasks", endpoints.GetTask)
-		authorized.GET("/tasks/:id", endpoints.GetTaskByID)
-		authorized.DELETE("/delete/:id", endpoints.DeleteTask)
+		authorized.GET("/tasks", getTask)
+		authorized.GET("/tasks/:id", getTaskByID)
+		authorized.DELETE("/delete/:id", deleteTask)
 		authorized.POST("/tasks", addTask)
-		authorized.POST("/completeTask/:id", endpoints.CompleteTask)
-		authorized.GET("/completed/:id", endpoints.CompleteTaskDeleteFromTasks)
+		authorized.POST("/completeTask/:id", completeTask)
+		authorized.GET("/completed/:id", completeTaskDeleteFromTasks)
 		// authorized.POST("/completed/:id", addToCompletedTable)
-		authorized.GET("/completed", endpoints.GetCompletedTasks)
+		authorized.GET("/completed", getCompletedTasks)
 		router.GET("/auth/:provider", handleGoogleAuth)
 		router.GET("/auth/:provider/callback", handleGoogleCallback)
 		router.GET("/logout", googleLogout)
