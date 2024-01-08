@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/base64"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -61,15 +62,15 @@ func main() {
 	dbHost := os.Getenv("DB_HOST")
 	dbPort := os.Getenv("DB_PORT")
 
-	// dbConnectionString := "postgres://postgres:postgres@10.0.0.8:5432/postgres?sslmode=disable"
-	dbConnectionString := "postgres://" + dbUser + ":" + dbPassword + "@" + dbHost + ":" + dbPort + "/" + dbName + "?sslmode=disable"
-
-	// Open a connection to the database
-	db, err = sql.Open("postgres", dbConnectionString)
+	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", dbHost, dbPort, dbUser, dbPassword, dbName))
 	if err != nil {
-		log.Printf("Error opening database: %v\n", err)
+		log.Fatal(err)
 	}
 
+	err = db.Ping()
+	if err != nil {
+		log.Fatal("Error: Could not establish a connection with the database")
+	}
 	auth.NewAuth()
 	router := gin.Default()
 	router.LoadHTMLGlob("templates/*")
