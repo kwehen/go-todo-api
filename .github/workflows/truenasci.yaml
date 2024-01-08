@@ -4,16 +4,7 @@ on:
   push:
     branches:
       - main
-
-env:
-  DB_USER: ${{ secrets.DB_USER }}
-  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-  DB_HOST: ${{ secrets.DB_HOST }}
-  DB_PORT: ${{ secrets.DB_PORT }}
-  GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-  GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-  SECRET_KEY: ${{ secrets.SECRET_KEY }}
-
+      
 jobs:
   docker:
     runs-on: ubuntu-latest

@@ -188,6 +188,7 @@ func addTask(c *gin.Context) {
 
 	c.IndentedJSON(http.StatusCreated, newTask)
 }
+
 func deleteTask(c *gin.Context) {
 	id := c.Param("id")
 
