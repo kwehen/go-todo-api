@@ -26,8 +26,9 @@ type task struct {
 }
 
 type completed struct {
-	ID   string `json:"id"`
-	Task string `json:"task"`
+	ID     string `json:"id"`
+	Task   string `json:"task"`
+	UserID string `json:"user_id"`
 }
 
 type User struct {
@@ -223,6 +224,7 @@ func getTaskByID(c *gin.Context) {
 		if err := rows.Scan(&t.ID, &t.Task, &t.Urgency, &t.Hours, &t.Completed); err != nil {
 			log.Printf("Error scanning rows: %v\n", err)
 		}
+
 	}
 	if err := rows.Err(); err != nil {
 		log.Printf("Error iterating over rows: %v\n", err)
@@ -317,26 +319,6 @@ func completeTask(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, gin.H{"message": "Task completed"})
 }
 
-// func addToCompletedTable(c *gin.Context) {
-// 	id := c.Param("id")
-
-// 	stmt, err := db.Prepare("INSERT INTO completed(task) SELECT task FROM tasks WHERE task_id = $1")
-// 	if err != nil {
-// 		log.Println("Error preparing SQL statement:", err)
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-// 		return
-// 	}
-// 	defer stmt.Close()
-
-// 	if _, err := stmt.Exec(id); err != nil {
-// 		log.Println("Error executing SQL statement:", err)
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-// 		return
-// 	}
-
-// 	c.IndentedJSON(http.StatusOK, gin.H{"message": "Task added to completed table"})
-// }
-
 func getCompletedTasks(c *gin.Context) {
 	c.Header("Content-Type", "text/html")
 	email, err := c.Cookie("email")
@@ -359,9 +341,15 @@ func getCompletedTasks(c *gin.Context) {
 	var tasks []completed
 	for rows.Next() {
 		var t completed
-		if err := rows.Scan(&t.ID, &t.Task); err != nil {
+		if err := rows.Scan(&t.ID, &t.Task, &t.UserID); err != nil {
 			log.Printf("Error scanning rows: %v\n", err)
 		}
+
+		decryptedTask, err := auth.Decrypt(t.Task, os.Getenv("SECRET_KEY"))
+		if err != nil {
+			log.Printf("Error decrypting task: %v\n", err)
+		}
+		t.Task = decryptedTask
 		tasks = append(tasks, t)
 	}
 	if err := rows.Err(); err != nil {
