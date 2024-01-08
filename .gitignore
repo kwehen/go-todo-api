@@ -10,3 +10,5 @@ gok3sdeploy.yml
 go-todo-api
 ignorethis.txt
 .DS_Store
+completed.sql
+init.sql
