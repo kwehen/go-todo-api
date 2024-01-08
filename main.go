@@ -344,6 +344,7 @@ func getCompletedTasks(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "No email cookie found"})
 		return
 	}
+
 	decryptedEmail, err := auth.Decrypt(email, os.Getenv("SECRET_KEY"))
 	if err != nil {
 		log.Printf("Error decrypting email: %v\n", err)
