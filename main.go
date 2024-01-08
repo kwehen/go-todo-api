@@ -86,7 +86,7 @@ func main() {
 		})
 		authorized.GET("/tasks", getTask)
 		authorized.GET("/tasks/:id", getTaskByID)
-		authorized.DELETE("/delete/:id", deleteTask)
+		// authorized.DELETE("/delete/:id", deleteTask)
 		authorized.POST("/tasks", addTask)
 		authorized.POST("/completeTask/:id", completeTask)
 		authorized.GET("/completed/:id", completeTaskDeleteFromTasks)
@@ -190,30 +190,39 @@ func addTask(c *gin.Context) {
 	c.IndentedJSON(http.StatusCreated, newTask)
 }
 
-func deleteTask(c *gin.Context) {
-	id := c.Param("id")
+// func deleteTask(c *gin.Context) {
+// 	id := c.Param("id")
 
-	stmt, err := db.Prepare("DELETE FROM tasks WHERE task_id = $1")
-	if err != nil {
-		log.Println("Error preparing SQL statement:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-		return
-	}
-	defer stmt.Close()
+// 	stmt, err := db.Prepare("DELETE FROM tasks WHERE task_id = $1")
+// 	if err != nil {
+// 		log.Println("Error preparing SQL statement:", err)
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+// 		return
+// 	}
+// 	defer stmt.Close()
 
-	if _, err := stmt.Exec(id); err != nil {
-		log.Println("Error executing SQL statement:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-		return
-	}
+// 	if _, err := stmt.Exec(id); err != nil {
+// 		log.Println("Error executing SQL statement:", err)
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+// 		return
+// 	}
 
-	c.IndentedJSON(http.StatusOK, gin.H{"message": "Task deleted"})
-}
+// 	c.IndentedJSON(http.StatusOK, gin.H{"message": "Task deleted"})
+// }
 
 func getTaskByID(c *gin.Context) {
 	id := c.Param("id")
+	email, err := c.Cookie("email")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No email cookie found"})
+		return
+	}
+	decryptedEmail, err := auth.Decrypt(email, os.Getenv("SECRET_KEY"))
+	if err != nil {
+		log.Printf("Error decrypting email: %v\n", err)
+	}
 
-	rows, err := db.Query("SELECT * FROM tasks WHERE task_id = $1", id)
+	rows, err := db.Query("SELECT * FROM tasks WHERE task_id = $1 AND user_id = $2", id, decryptedEmail)
 	if err != nil {
 		log.Printf("Error querying database: %v\n", err)
 	}
@@ -221,7 +230,7 @@ func getTaskByID(c *gin.Context) {
 
 	var t task
 	for rows.Next() {
-		if err := rows.Scan(&t.ID, &t.Task, &t.Urgency, &t.Hours, &t.Completed); err != nil {
+		if err := rows.Scan(&t.ID, &t.Task, &t.Urgency, &t.Hours, &t.Completed, &t.UserID); err != nil {
 			log.Printf("Error scanning rows: %v\n", err)
 		}
 
