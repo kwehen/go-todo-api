@@ -233,7 +233,11 @@ func getTaskByID(c *gin.Context) {
 		if err := rows.Scan(&t.ID, &t.Task, &t.Urgency, &t.Hours, &t.Completed, &t.UserID); err != nil {
 			log.Printf("Error scanning rows: %v\n", err)
 		}
-
+		decryptedTask, err := auth.Decrypt(t.Task, os.Getenv("SECRET_KEY"))
+		if err != nil {
+			log.Printf("Error decrypting task: %v\n", err)
+		}
+		t.Task = decryptedTask
 	}
 	if err := rows.Err(); err != nil {
 		log.Printf("Error iterating over rows: %v\n", err)
