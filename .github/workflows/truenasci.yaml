@@ -1,9 +1,18 @@
-name: ci
+name: TrueNAS CI
 
 on:
   push:
     branches:
       - main
+
+env:
+  DB_USER: ${{ secrets.DB_USER }}
+  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+  DB_HOST: ${{ secrets.DB_HOST }}
+  DB_PORT: ${{ secrets.DB_PORT }}
+  GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+  GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+  SECRET_KEY: ${{ secrets.SECRET_KEY }}
 
 jobs:
   docker:
@@ -34,7 +43,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          platforms: linux/amd64
+          platforms: linux/amd64, linux/arm64
           push: true
           tags: jeffhardyski/go-todo-oauth:latest
         
