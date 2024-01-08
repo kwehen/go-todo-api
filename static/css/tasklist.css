@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap');
+
 body, html {
     margin: 0;
     padding: 0;
@@ -5,15 +7,18 @@ body, html {
     display: flex;
     justify-content: center;
     align-items: center;
-    font-family: 'Arial', sans-serif;
+    font-family: 'Roboto', sans-serif; /* Modern and clean font */
     background-color: #f4f4f4;
 }
 
 .container {
-    width: 90%; /* Increased width */
-    max-width: 1200px; /* Increased maximum width */
-    margin: auto;
-    overflow: hidden;
+    width: 90%;
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 15px; /* Rounded corners for the container */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
 h1.text-center {
@@ -22,38 +27,53 @@ h1.text-center {
     text-align: center;
 }
 
+h1.text-center a {
+    color: #007bff; /* Soft blue for links */
+    text-decoration: none;
+    transition: color 0.3s ease-in-out;
+}
+
+h1.text-center a:hover {
+    color: #0056b3; /* Darker blue on hover */
+}
+
 .table {
     background-color: #fff;
-    border-radius: 8px;
+    border-radius: 8px; /* Rounded corners for the table */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    width: 100%; /* Ensure table uses full container width */
+    width: 100%;
+    border-collapse: separate; /* Necessary for rounded corners */
+    border-spacing: 0;
 }
 
 .table thead {
     background-color: #007bff;
     color: #fff;
+    border-top-left-radius: 8px; /* Rounded top corners */
+    border-top-right-radius: 8px;
 }
 
 .table thead th {
-    padding: 15px; /* Increase padding for larger table headers */
+    padding: 15px;
 }
 
 .table tbody td {
-    padding: 12px; /* Increase padding for table cells */
+    padding: 12px;
     color: #555;
+    vertical-align: middle;
 }
 
 /* Row Coloring Based on Urgency */
 .table tbody tr[data-urgency="High"] {
-    background-color: #f8a8a8; /* Light red for high urgency */
+    background-color: #f8d7da; /* Light red for high urgency */
 }
 
 .table tbody tr[data-urgency="Medium"] {
-    background-color: #f5eeb1; /* Light yellow for medium urgency */
+    background-color: #fff3cd; /* Light yellow for medium urgency */
 }
 
 .table tbody tr[data-urgency="Low"] {
-    background-color: #8dee9b; /* Light green for low urgency */
+    background-color: #d4edda; /* Light green for low urgency */
 }
 
 .table-hover tbody tr:hover {
@@ -63,10 +83,12 @@ h1.text-center {
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .container {
-        width: 95%; /* Adjust for smaller screens */
+        width: 95%;
+        margin: 10px auto;
+        padding: 10px;
     }
 
     .table thead th, .table tbody td {
-        padding: 8px; /* Smaller padding on smaller screens */
+        padding: 8px;
     }
 }
