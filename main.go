@@ -51,7 +51,7 @@ type User struct {
 
 var db *sql.DB
 
-var sessionStore = make(map[string]string)
+// var sessionStore = make(map[string]string)
 
 func main() {
 	var err error
@@ -89,7 +89,7 @@ func main() {
 		authorized.POST("/tasks", addTask)
 		authorized.POST("/completeTask/:id", completeTask)
 		authorized.GET("/completed/:id", completeTaskDeleteFromTasks)
-		authorized.POST("/completed/:id", addToCompletedTable)
+		// authorized.POST("/completed/:id", addToCompletedTable)
 		authorized.GET("/completed", getCompletedTasks)
 		router.GET("/auth/:provider", handleGoogleAuth)
 		router.GET("/auth/:provider/callback", handleGoogleCallback)
@@ -149,19 +149,13 @@ func addTask(c *gin.Context) {
 		return
 	}
 
-	// for key, value := range c.Keys {
-	//     fmt.Printf("Key: %s, Value: %v\n", key, value)
-	// }
 	email, err := c.Cookie("email")
 	if err != nil {
 		// Handle error
 		c.JSON(http.StatusBadRequest, gin.H{"error": "No email cookie found"})
 		return
 	}
-	// Get user ID from context
-	// user := c.MustGet("user").(string)
-	// email := c.MustGet("email").(string)
-	// Add user ID to newTask
+
 	newTask.UserID = email
 
 	stmt, err := db.Prepare("INSERT INTO tasks(task, urgency, hours, completed, user_id) VALUES($1, $2, $3, $4, $5)")
@@ -179,6 +173,8 @@ func addTask(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 		return
 	}
+
+	// decrypt email
 	decryptedEmail, err := auth.Decrypt(email, os.Getenv("SECRET_KEY"))
 	if err != nil {
 		log.Printf("Error decrypting email: %v\n", err)
@@ -235,6 +231,17 @@ func getTaskByID(c *gin.Context) {
 
 func completeTaskDeleteFromTasks(c *gin.Context) {
 	id := c.Param("id")
+	email, err := c.Cookie("email")
+	if err != nil {
+		// Handle error
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No email cookie found"})
+		return
+	}
+	// decrypt email
+	decryptedEmail, err := auth.Decrypt(email, os.Getenv("SECRET_KEY"))
+	if err != nil {
+		log.Printf("Error decrypting email: %v\n", err)
+	}
 
 	// Start a transaction
 	tx, err := db.Begin()
@@ -245,7 +252,7 @@ func completeTaskDeleteFromTasks(c *gin.Context) {
 	}
 
 	// First SQL command: Update
-	if _, err := tx.Exec("UPDATE tasks SET completed = true WHERE task_id = $1", id); err != nil {
+	if _, err := tx.Exec("UPDATE tasks SET completed = true WHERE task_id = $1 AND user_id = $2", id, decryptedEmail); err != nil {
 		tx.Rollback()
 		log.Println("Error executing update statement:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
@@ -253,7 +260,7 @@ func completeTaskDeleteFromTasks(c *gin.Context) {
 	}
 
 	// Second SQL command: Insert
-	if _, err := tx.Exec("INSERT INTO completed(task) SELECT task FROM tasks WHERE task_id = $1", id); err != nil {
+	if _, err := tx.Exec("INSERT INTO completed(task, user_id) SELECT task, user_id FROM tasks WHERE task_id = $1 AND user_id = $2", id, decryptedEmail); err != nil {
 		tx.Rollback()
 		log.Println("Error executing insert statement:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
@@ -261,7 +268,7 @@ func completeTaskDeleteFromTasks(c *gin.Context) {
 	}
 
 	// Third SQL command: Delete
-	if _, err := tx.Exec("DELETE FROM tasks WHERE task_id = $1", id); err != nil {
+	if _, err := tx.Exec("DELETE FROM tasks WHERE task_id = $1 AND user_id = $2", id, decryptedEmail); err != nil {
 		tx.Rollback()
 		log.Println("Error executing delete statement:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
@@ -280,8 +287,19 @@ func completeTaskDeleteFromTasks(c *gin.Context) {
 
 func completeTask(c *gin.Context) {
 	id := c.Param("id")
+	email, err := c.Cookie("email")
+	if err != nil {
+		// Handle error
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No email cookie found"})
+		return
+	}
+	// decrypt email
+	decryptedEmail, err := auth.Decrypt(email, os.Getenv("SECRET_KEY"))
+	if err != nil {
+		log.Printf("Error decrypting email: %v\n", err)
+	}
 
-	stmt, err := db.Prepare("UPDATE tasks SET completed = true WHERE task_id = $1")
+	stmt, err := db.Prepare("UPDATE tasks SET completed = true WHERE task_id = $1 AND user_id = $2")
 	if err != nil {
 		log.Println("Error preparing SQL statement:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
@@ -289,7 +307,7 @@ func completeTask(c *gin.Context) {
 	}
 	defer stmt.Close()
 
-	if _, err := stmt.Exec(id); err != nil {
+	if _, err := stmt.Exec(id, decryptedEmail); err != nil {
 		log.Println("Error executing SQL statement:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 		return
@@ -298,30 +316,39 @@ func completeTask(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, gin.H{"message": "Task completed"})
 }
 
-func addToCompletedTable(c *gin.Context) {
-	id := c.Param("id")
+// func addToCompletedTable(c *gin.Context) {
+// 	id := c.Param("id")
 
-	stmt, err := db.Prepare("INSERT INTO completed(task) SELECT task FROM tasks WHERE task_id = $1")
-	if err != nil {
-		log.Println("Error preparing SQL statement:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-		return
-	}
-	defer stmt.Close()
+// 	stmt, err := db.Prepare("INSERT INTO completed(task) SELECT task FROM tasks WHERE task_id = $1")
+// 	if err != nil {
+// 		log.Println("Error preparing SQL statement:", err)
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+// 		return
+// 	}
+// 	defer stmt.Close()
 
-	if _, err := stmt.Exec(id); err != nil {
-		log.Println("Error executing SQL statement:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-		return
-	}
+// 	if _, err := stmt.Exec(id); err != nil {
+// 		log.Println("Error executing SQL statement:", err)
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+// 		return
+// 	}
 
-	c.IndentedJSON(http.StatusOK, gin.H{"message": "Task added to completed table"})
-}
+// 	c.IndentedJSON(http.StatusOK, gin.H{"message": "Task added to completed table"})
+// }
 
 func getCompletedTasks(c *gin.Context) {
 	c.Header("Content-Type", "text/html")
+	email, err := c.Cookie("email")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No email cookie found"})
+		return
+	}
+	decryptedEmail, err := auth.Decrypt(email, os.Getenv("SECRET_KEY"))
+	if err != nil {
+		log.Printf("Error decrypting email: %v\n", err)
+	}
 
-	rows, err := db.Query("SELECT * FROM completed")
+	rows, err := db.Query("SELECT * FROM completed WHERE user_id = $1", decryptedEmail)
 	if err != nil {
 		log.Printf("Error querying database: %v\n", err)
 	}
@@ -341,24 +368,12 @@ func getCompletedTasks(c *gin.Context) {
 	c.HTML(http.StatusOK, "completed.html", tasks)
 }
 
-// func handleGoogleAuth(c *gin.Context) {
-// 	gothic.BeginAuthHandler(c.Writer, c.Request)
-// }
-
 func handleGoogleAuth(c *gin.Context) {
 	provider := c.Param("provider")
 
 	r := c.Request.WithContext(context.WithValue(c.Request.Context(), gothic.ProviderParamKey, provider))
-	gothic.BeginAuthHandler(c.Writer, r) // Use the new request r here
+	gothic.BeginAuthHandler(c.Writer, r)
 }
-
-// func googleAuth(c *gin.Context) {
-// 	err := gothic.BeginAuthHandler(c.Writer, c.Request)
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-// 		return
-// 	}
-// }
 
 func handleGoogleCallback(c *gin.Context) {
 	provider := c.Param("provider")
@@ -384,7 +399,6 @@ func handleGoogleCallback(c *gin.Context) {
 	}
 
 	sessionToken := base64.StdEncoding.EncodeToString(b)
-	// encryptedEmail := auth.Encrypt(user.Email, os.Getenv("SECRET_KEY"))
 	encryptedEmail, err := auth.Encrypt(user.Email, os.Getenv("SECRET_KEY"))
 	if err != nil {
 		log.Println("Error encrypting email:", err)
@@ -408,17 +422,6 @@ func handleGoogleCallback(c *gin.Context) {
 func googleLogout(c *gin.Context) {
 	gothic.Logout(c.Writer, c.Request)
 
-	// Get the session token from the cookie
-	// sessionToken, err := c.Cookie("user")
-	// if err != nil {
-	// 	c.Error(err)
-	// 	return
-	// }
-
-	// // Delete the session from your database
-	// // Assuming you have a function deleteSession that does this
-	// deleteSession(sessionToken)
-
 	c.SetCookie("user", "", -1, "/", ".kamaufoundation.com", true, true)
 	c.SetCookie("email", "", -1, "/", ".kamaufoundation.com", true, true)
 	// c.SetCookie("user", "", -1, "/", "localhost", true, true)
@@ -434,15 +437,15 @@ func googleLogin(c *gin.Context) {
 	}
 }
 
-func storeSession(sessionToken string, oauthToken string) {
-	sessionStore[sessionToken] = oauthToken
-}
+// func storeSession(sessionToken string, oauthToken string) {
+// 	sessionStore[sessionToken] = oauthToken
+// }
 
-func deleteSession(sessionToken string) {
-	delete(sessionStore, sessionToken)
-}
+// func deleteSession(sessionToken string) {
+// 	delete(sessionStore, sessionToken)
+// }
 
-func getOAuthToken(sessionToken string) (string, bool) {
-	oauthToken, exists := sessionStore[sessionToken]
-	return oauthToken, exists
-}
+// func getOAuthToken(sessionToken string) (string, bool) {
+// 	oauthToken, exists := sessionStore[sessionToken]
+// 	return oauthToken, exists
+// }
