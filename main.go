@@ -487,10 +487,10 @@ func handleGoogleCallback(c *gin.Context) {
 	}
 
 	// Set a secure cookie with the session token
-	c.SetCookie("user", sessionToken, 3600, "/", ".kamaufoundation.com", true, true)
-	c.SetCookie("email", encryptedEmail, 3600, "/", ".kamaufoundation.com", true, true)
-	// c.SetCookie("user", sessionToken, 3600, "/", "localhost", true, true)
-	// c.SetCookie("email", encryptedEmail, 3600, "/", "localhost", true, true)
+	// c.SetCookie("user", sessionToken, 3600, "/", ".kamaufoundation.com", true, true)
+	// c.SetCookie("email", encryptedEmail, 3600, "/", ".kamaufoundation.com", true, true)
+	c.SetCookie("user", sessionToken, 3600, "/", "localhost", true, true)
+	c.SetCookie("email", encryptedEmail, 3600, "/", "localhost", true, true)
 
 	log.Println("Logged in as:", user.Name)
 	log.Println("Email:", user.Email)
@@ -500,9 +500,9 @@ func handleGoogleCallback(c *gin.Context) {
 func googleLogout(c *gin.Context) {
 	gothic.Logout(c.Writer, c.Request)
 
-	c.SetCookie("user", "", -1, "/", ".kamaufoundation.com", true, true)
-	c.SetCookie("email", "", -1, "/", ".kamaufoundation.com", true, true)
-	// c.SetCookie("user", "", -1, "/", "localhost", true, true)
+	// c.SetCookie("user", "", -1, "/", ".kamaufoundation.com", true, true)
+	// c.SetCookie("email", "", -1, "/", ".kamaufoundation.com", true, true)
+	c.SetCookie("user", "", -1, "/", "localhost", true, true)
 	c.Redirect(http.StatusTemporaryRedirect, "/")
 }
 
