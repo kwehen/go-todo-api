@@ -13,7 +13,7 @@
         <table class="table table-hover">
             <thead class="thead-light">
                 <tr>
-                    <th>ID</th>
+                    <!-- <th>ID</th> -->
                     <th>Task</th>
                     <th>Urgency</th>
                     <th>Hours</th>
@@ -22,16 +22,16 @@
             </thead>
             <tbody>
                 {{range .}}
-                    <tr data-urgency="{{.Urgency}}">
-                        <td>{{.ID}}</td>
+                    <tr class="task-row" data-id="{{.ID}}" data-urgency="{{.Urgency}}">
                         <td>{{.Task}}</td>
                         <td>{{.Urgency}}</td>
                         <td>{{.Hours}}</td>
                         <td>{{if .Completed}}Yes{{else}}No{{end}}</td>
                     </tr>
                 {{end}}
-            </tbody>
+            </tbody>        
         </table>
     </div>
+    <script type="text/javascript" src="/static/js/taskscript.js"></script>
 </body>
 </html>
