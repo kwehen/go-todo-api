@@ -20,10 +20,11 @@
             <p class="task-completed">
                 {{if .Task.Completed}}Completed ✓{{else}}Not Completed ✗{{end}}
             </p>            
-            <form action="/completeTask" id="completeThisTask" method="post" class="task-completed"
-                {{if .Completed}}style="display: none;"{{end}}>
+            {{if not .Task.Completed}}
+            <form action="/completeTask" id="completeThisTask" method="post" class="task-completed">
                 <button type="submit" class="btn btn-success btn-block">Complete Task</button>
             </form>
+            {{end}}
             <form action="/addTaskNote/{{.Task.ID}}" method="post">
                 <div class="mb-3">
                     <label for="taskNote" class="form-label">Add Note</label>

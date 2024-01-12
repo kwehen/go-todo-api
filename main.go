@@ -25,11 +25,11 @@ type task struct {
 	UserID    string  `json:"user_id"`
 }
 
-type completed struct {
-	ID     string `json:"id"`
-	Task   string `json:"task"`
-	UserID string `json:"user_id"`
-}
+// type completed struct {
+// 	ID     string `json:"id"`
+// 	Task   string `json:"task"`
+// 	UserID string `json:"user_id"`
+// }
 
 type User struct {
 	RawData           map[string]interface{}
@@ -324,6 +324,7 @@ func getTaskByID(c *gin.Context) {
 
 func completeTaskDeleteFromTasks(c *gin.Context) {
 	id := c.Param("id")
+
 	email, err := c.Cookie("email")
 	if err != nil {
 		// Handle error
@@ -422,16 +423,16 @@ func getCompletedTasks(c *gin.Context) {
 		log.Printf("Error decrypting email: %v\n", err)
 	}
 
-	rows, err := db.Query("SELECT * FROM completed WHERE user_id = $1", decryptedEmail)
+	rows, err := db.Query("SELECT * FROM tasks WHERE user_id = $1 AND completed = true", decryptedEmail)
 	if err != nil {
 		log.Printf("Error querying database: %v\n", err)
 	}
 	defer rows.Close()
 
-	var tasks []completed
+	var tasks []task
 	for rows.Next() {
-		var t completed
-		if err := rows.Scan(&t.ID, &t.Task, &t.UserID); err != nil {
+		var t task
+		if err := rows.Scan(&t.ID, &t.Task, &t.Urgency, &t.Hours, &t.Completed, &t.UserID); err != nil {
 			log.Printf("Error scanning rows: %v\n", err)
 		}
 
@@ -503,7 +504,7 @@ func googleLogout(c *gin.Context) {
 	c.SetCookie("user", "", -1, "/", ".kamaufoundation.com", true, true)
 	c.SetCookie("email", "", -1, "/", ".kamaufoundation.com", true, true)
 	// c.SetCookie("user", "", -1, "/", "localhost", true, true)
-	// c.Redirect(http.StatusTemporaryRedirect, "/")
+	c.Redirect(http.StatusTemporaryRedirect, "/")
 }
 
 func googleLogin(c *gin.Context) {

@@ -14,12 +14,6 @@
             <form action="/tasks" method="get" class="view-tasks">
                 <button type="submit" class="btn btn-primary btn-block">View Tasks</button>
             </form>
-            <form id="completed" action="/completed" method="get" class="complete-task">
-                <label for="completed">Complete & Delete a Task:</label>
-                <input type="text" name="id" id="completedId" placeholder="ID" class="form-control">
-                <button type="submit" class="btn btn-success">Complete Task</button>
-            </form>
-
             <form id="showCompleted" action="/completed" method="get">
                 <button type="submit" class="btn btn-complete btn-block">Show Completed Tasks</button>
             </form>
@@ -41,8 +35,6 @@
             </form>
         </div>
     </div>
-
-    <script type="text/javascript" src="/static/js/indexscripts.js"></script>
     <script type="text/javascript" src="/static/js/addtask.js"></script>
 </body>
 </html>
