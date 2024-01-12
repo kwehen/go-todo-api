@@ -90,6 +90,8 @@ func main() {
 		authorized.POST("/tasks", addTask)
 		authorized.POST("/completeTask/:id", completeTask)
 		authorized.GET("/completed/:id", completeTaskDeleteFromTasks)
+		authorized.POST("/addTaskNote/:id", addTaskNote)
+		authorized.GET("/getTaskNotes/:id", getTaskNotes)
 		// authorized.POST("/completed/:id", addToCompletedTable)
 		authorized.GET("/completed", getCompletedTasks)
 		router.GET("/auth/:provider", handleGoogleAuth)
@@ -188,6 +190,63 @@ func addTask(c *gin.Context) {
 	}
 
 	c.IndentedJSON(http.StatusCreated, newTask)
+}
+
+func addTaskNote(c *gin.Context) {
+	taskID := c.Param("id")
+	taskNote := c.PostForm("taskNote")
+	email, err := c.Cookie("email")
+	if err != nil {
+		// Handle error
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No email cookie found"})
+		return
+	}
+	// decrypt email
+	decryptedEmail, err := auth.Decrypt(email, os.Getenv("SECRET_KEY"))
+	if err != nil {
+		log.Printf("Error decrypting email: %v\n", err)
+	}
+
+	// SQL query to insert note
+	_, err = db.Exec("INSERT INTO task_notes (task_id, task_note, user_id) VALUES ($1, $2, $3)", taskID, taskNote, decryptedEmail)
+	if err != nil {
+		// handle error
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		return
+	}
+
+	c.Redirect(http.StatusFound, "/tasks/"+taskID)
+}
+
+func getTaskNotes(c *gin.Context) {
+	taskID := c.Param("id")
+
+	// SQL query to retrieve notes
+	rows, err := db.Query("SELECT task_note FROM task_notes WHERE task_id = $1", taskID)
+	if err != nil {
+		// handle error
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		return
+	}
+	defer rows.Close()
+
+	var notes []string
+	for rows.Next() {
+		var note string
+		if err := rows.Scan(&note); err != nil {
+			// handle error
+			continue
+		}
+		notes = append(notes, note)
+	}
+
+	var myTask task
+	// populate myTask
+	c.HTML(http.StatusOK, "gettaskid.html", gin.H{
+		"Task":  myTask,
+		"Notes": notes,
+		// include other necessary data
+	})
 }
 
 // func deleteTask(c *gin.Context) {
@@ -412,10 +471,10 @@ func handleGoogleCallback(c *gin.Context) {
 	// storeSession(sessionToken, user.AccessToken)
 
 	// Set a secure cookie with the session token
-	c.SetCookie("user", sessionToken, 3600, "/", ".kamaufoundation.com", true, true)
-	c.SetCookie("email", encryptedEmail, 3600, "/", ".kamaufoundation.com", true, true)
-	// c.SetCookie("user", sessionToken, 3600, "/", "localhost", true, true)
-	// c.SetCookie("email", encryptedEmail, 3600, "/", "localhost", true, true)
+	// c.SetCookie("user", sessionToken, 3600, "/", ".kamaufoundation.com", true, true)
+	// c.SetCookie("email", encryptedEmail, 3600, "/", ".kamaufoundation.com", true, true)
+	c.SetCookie("user", sessionToken, 3600, "/", "localhost", true, true)
+	c.SetCookie("email", encryptedEmail, 3600, "/", "localhost", true, true)
 
 	log.Println("Logged in as:", user.Name)
 	log.Println("Email:", user.Email)
@@ -425,9 +484,9 @@ func handleGoogleCallback(c *gin.Context) {
 func googleLogout(c *gin.Context) {
 	gothic.Logout(c.Writer, c.Request)
 
-	c.SetCookie("user", "", -1, "/", ".kamaufoundation.com", true, true)
-	c.SetCookie("email", "", -1, "/", ".kamaufoundation.com", true, true)
-	// c.SetCookie("user", "", -1, "/", "localhost", true, true)
+	// c.SetCookie("user", "", -1, "/", ".kamaufoundation.com", true, true)
+	// c.SetCookie("email", "", -1, "/", ".kamaufoundation.com", true, true)
+	c.SetCookie("user", "", -1, "/", "localhost", true, true)
 	c.Redirect(http.StatusTemporaryRedirect, "/")
 }
 

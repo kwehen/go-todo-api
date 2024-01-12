@@ -22,6 +22,21 @@
                 {{if .Completed}}style="display: none;"{{end}}>
                 <button type="submit" class="btn btn-success btn-block">Complete Task</button>
             </form>
+            <form action="/addTaskNote/{{.ID}}" method="post">
+                <div class="mb-3">
+                    <label for="taskNote" class="form-label">Add Note</label>
+                    <textarea class="form-control" id="taskNote" name="taskNote" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Submit Note</button>
+            </form>
+    
+            <!-- Section to display notes -->
+            <div class="task-notes mt-4">
+                <h3>Task Notes</h3>
+                {{range .Notes}}
+                    <div class="note">{{.}}</div>
+                {{end}}
+            </div>
         </div>
     </div>
     <script type="text/javascript" src="/static/js/taskscript.js"></script>
