@@ -44,3 +44,71 @@ h1.text-center {
     margin-left: 10px;
     font-size: 24px;
 }
+
+.task-notes {
+    background-color: #e9ecef; /* Light grey background for the notes section */
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    margin-top: 30px;
+}
+
+.task-notes h3 {
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.note {
+    background-color: #fff;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 10px;
+    color: #555;
+    font-size: 16px;
+}
+
+/* Styles for the Add Note form */
+form[action*="/addTaskNote"] {
+    background-color: #e9ecef; /* Light grey background */
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    margin-top: 30px;
+}
+
+form[action*="/addTaskNote"] .form-label {
+    color: #333;
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+form[action*="/addTaskNote"] .form-control {
+    font-size: 16px;
+    color: #555;
+    border-radius: 5px;
+    height: auto; /* Adjust height as needed */
+}
+
+form[action*="/addTaskNote"] .btn-primary {
+    background-color: #007bff; /* Bootstrap primary color */
+    border-color: #007bff;
+    font-size: 16px;
+    padding: 10px 15px; /* Adjust padding as needed */
+    margin-top: 10px;
+}
+
+/* Decrease the size of the textarea for note addition */
+#taskNote {
+    height: 100px; /* Adjust height as needed */
+}
+
+.task-details-link {
+    text-decoration: none; /* Removes underline from link */
+    color: inherit; /* Inherits the color from the parent element */
+}
+
+.task-details-link:hover {
+    text-decoration: none; /* Keeps the link without underline on hover */
+    opacity: 0.8; /* Slight opacity change on hover for visual feedback */
+}

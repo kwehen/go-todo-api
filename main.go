@@ -62,7 +62,6 @@ func main() {
 	dbHost := os.Getenv("DB_HOST")
 	dbPort := os.Getenv("DB_PORT")
 
-	// dbConnectionString := "postgres://postgres:postgres@10.0.0.8:5432/postgres?sslmode=disable"
 	dbConnectionString := "postgres://" + dbUser + ":" + dbPassword + "@" + dbHost + ":" + dbPort + "/" + dbName + "?sslmode=disable"
 
 	// Open a connection to the database
@@ -86,13 +85,11 @@ func main() {
 		})
 		authorized.GET("/tasks", getTask)
 		authorized.GET("/tasks/:id", getTaskByID)
-		// authorized.DELETE("/delete/:id", deleteTask)
 		authorized.POST("/tasks", addTask)
 		authorized.POST("/completeTask/:id", completeTask)
 		authorized.GET("/completed/:id", completeTaskDeleteFromTasks)
 		authorized.POST("/addTaskNote/:id", addTaskNote)
 		authorized.GET("/getTaskNotes/:id", getTaskNotes)
-		// authorized.POST("/completed/:id", addToCompletedTable)
 		authorized.GET("/completed", getCompletedTasks)
 		router.GET("/auth/:provider", handleGoogleAuth)
 		router.GET("/auth/:provider/callback", handleGoogleCallback)
@@ -197,20 +194,24 @@ func addTaskNote(c *gin.Context) {
 	taskNote := c.PostForm("taskNote")
 	email, err := c.Cookie("email")
 	if err != nil {
-		// Handle error
 		c.JSON(http.StatusBadRequest, gin.H{"error": "No email cookie found"})
 		return
 	}
-	// decrypt email
 	decryptedEmail, err := auth.Decrypt(email, os.Getenv("SECRET_KEY"))
 	if err != nil {
 		log.Printf("Error decrypting email: %v\n", err)
+		return
 	}
 
-	// SQL query to insert note
-	_, err = db.Exec("INSERT INTO task_notes (task_id, task_note, user_id) VALUES ($1, $2, $3)", taskID, taskNote, decryptedEmail)
+	encryptedTaskNote, err := auth.Encrypt(taskNote, os.Getenv("SECRET_KEY"))
 	if err != nil {
-		// handle error
+		log.Println("Error encrypting task note:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+		return
+	}
+
+	_, err = db.Exec("INSERT INTO task_notes (task_id, task_note, user_id) VALUES ($1, $2, $3)", taskID, encryptedTaskNote, decryptedEmail)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 		return
 	}
@@ -220,9 +221,18 @@ func addTaskNote(c *gin.Context) {
 
 func getTaskNotes(c *gin.Context) {
 	taskID := c.Param("id")
+	email, err := c.Cookie("email")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No email cookie found"})
+		return
+	}
+	decryptedEmail, err := auth.Decrypt(email, os.Getenv("SECRET_KEY"))
+	if err != nil {
+		log.Printf("Error decrypting email: %v\n", err)
+		return
+	}
 
-	// SQL query to retrieve notes
-	rows, err := db.Query("SELECT task_note FROM task_notes WHERE task_id = $1", taskID)
+	rows, err := db.Query("SELECT task_note FROM task_notes WHERE task_id = $1 AND user_id = $2", taskID, decryptedEmail)
 	if err != nil {
 		// handle error
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
@@ -249,26 +259,6 @@ func getTaskNotes(c *gin.Context) {
 	})
 }
 
-// func deleteTask(c *gin.Context) {
-// 	id := c.Param("id")
-
-// 	stmt, err := db.Prepare("DELETE FROM tasks WHERE task_id = $1")
-// 	if err != nil {
-// 		log.Println("Error preparing SQL statement:", err)
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-// 		return
-// 	}
-// 	defer stmt.Close()
-
-// 	if _, err := stmt.Exec(id); err != nil {
-// 		log.Println("Error executing SQL statement:", err)
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-// 		return
-// 	}
-
-// 	c.IndentedJSON(http.StatusOK, gin.H{"message": "Task deleted"})
-// }
-
 func getTaskByID(c *gin.Context) {
 	id := c.Param("id")
 	email, err := c.Cookie("email")
@@ -279,29 +269,57 @@ func getTaskByID(c *gin.Context) {
 	decryptedEmail, err := auth.Decrypt(email, os.Getenv("SECRET_KEY"))
 	if err != nil {
 		log.Printf("Error decrypting email: %v\n", err)
+		return
 	}
 
-	rows, err := db.Query("SELECT * FROM tasks WHERE task_id = $1 AND user_id = $2", id, decryptedEmail)
+	// Fetch the task
+	var t task
+	err = db.QueryRow("SELECT * FROM tasks WHERE task_id = $1 AND user_id = $2", id, decryptedEmail).Scan(&t.ID, &t.Task, &t.Urgency, &t.Hours, &t.Completed, &t.UserID)
 	if err != nil {
-		log.Printf("Error querying database: %v\n", err)
+		log.Printf("Error querying task by ID: %v\n", err)
+		return
+	}
+
+	// Decrypt the task's details
+	decryptedTask, err := auth.Decrypt(t.Task, os.Getenv("SECRET_KEY"))
+	if err != nil {
+		log.Printf("Error decrypting task: %v\n", err)
+		return
+	}
+	t.Task = decryptedTask
+
+	// Fetch the associated notes
+	rows, err := db.Query("SELECT task_note FROM task_notes WHERE task_id = $1", id)
+	if err != nil {
+		log.Printf("Error querying task notes: %v\n", err)
+		return
 	}
 	defer rows.Close()
 
-	var t task
+	var notes []string
 	for rows.Next() {
-		if err := rows.Scan(&t.ID, &t.Task, &t.Urgency, &t.Hours, &t.Completed, &t.UserID); err != nil {
-			log.Printf("Error scanning rows: %v\n", err)
+		var note string
+		if err := rows.Scan(&note); err != nil {
+			log.Printf("Error scanning note: %v\n", err)
 		}
-		decryptedTask, err := auth.Decrypt(t.Task, os.Getenv("SECRET_KEY"))
+		decryptedNotes, err := auth.Decrypt(note, os.Getenv("SECRET_KEY"))
 		if err != nil {
-			log.Printf("Error decrypting task: %v\n", err)
+			log.Printf("Error decrypting note: %v\n", err)
+			continue
 		}
-		t.Task = decryptedTask
+
+		notes = append(notes, decryptedNotes)
 	}
 	if err := rows.Err(); err != nil {
 		log.Printf("Error iterating over rows: %v\n", err)
+		return
 	}
-	c.HTML(http.StatusOK, "gettaskid.html", t)
+
+	// Pass the task and notes to the template
+	c.HTML(http.StatusOK, "gettaskid.html", gin.H{
+		"Task":  t,
+		"Notes": notes,
+	})
 }
 
 func completeTaskDeleteFromTasks(c *gin.Context) {
@@ -467,14 +485,12 @@ func handleGoogleCallback(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 		return
 	}
-	// // Store the session token and OAuth token in your database
-	// storeSession(sessionToken, user.AccessToken)
 
 	// Set a secure cookie with the session token
-	// c.SetCookie("user", sessionToken, 3600, "/", ".kamaufoundation.com", true, true)
-	// c.SetCookie("email", encryptedEmail, 3600, "/", ".kamaufoundation.com", true, true)
-	c.SetCookie("user", sessionToken, 3600, "/", "localhost", true, true)
-	c.SetCookie("email", encryptedEmail, 3600, "/", "localhost", true, true)
+	c.SetCookie("user", sessionToken, 3600, "/", ".kamaufoundation.com", true, true)
+	c.SetCookie("email", encryptedEmail, 3600, "/", ".kamaufoundation.com", true, true)
+	// c.SetCookie("user", sessionToken, 3600, "/", "localhost", true, true)
+	// c.SetCookie("email", encryptedEmail, 3600, "/", "localhost", true, true)
 
 	log.Println("Logged in as:", user.Name)
 	log.Println("Email:", user.Email)
@@ -484,9 +500,9 @@ func handleGoogleCallback(c *gin.Context) {
 func googleLogout(c *gin.Context) {
 	gothic.Logout(c.Writer, c.Request)
 
-	// c.SetCookie("user", "", -1, "/", ".kamaufoundation.com", true, true)
-	// c.SetCookie("email", "", -1, "/", ".kamaufoundation.com", true, true)
-	c.SetCookie("user", "", -1, "/", "localhost", true, true)
+	c.SetCookie("user", "", -1, "/", ".kamaufoundation.com", true, true)
+	c.SetCookie("email", "", -1, "/", ".kamaufoundation.com", true, true)
+	// c.SetCookie("user", "", -1, "/", "localhost", true, true)
 	c.Redirect(http.StatusTemporaryRedirect, "/")
 }
 
@@ -498,16 +514,3 @@ func googleLogin(c *gin.Context) {
 		gothic.BeginAuthHandler(c.Writer, c.Request)
 	}
 }
-
-// func storeSession(sessionToken string, oauthToken string) {
-// 	sessionStore[sessionToken] = oauthToken
-// }
-
-// func deleteSession(sessionToken string) {
-// 	delete(sessionStore, sessionToken)
-// }
-
-// func getOAuthToken(sessionToken string) (string, bool) {
-// 	oauthToken, exists := sessionStore[sessionToken]
-// 	return oauthToken, exists
-// }

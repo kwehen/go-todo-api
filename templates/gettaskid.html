@@ -10,24 +10,26 @@
 </head>
 <body>
     <div class="container mt-5">
-        <h1 class="text-center mb-4">Task Details</h1>
+        <a href="/tasks" class="task-details-link">
+            <h1 class="text-center mb-4">Task Details</h1>
+        </a>
         <div class="task-details">
-            <p class="task-item"><strong>Task:</strong> {{.Task}}</p>
-            <p class="task-item"><strong>Urgency:</strong> {{.Urgency}}</p>
-            <p class="task-item"><strong>Hours:</strong> {{.Hours}}</p>
+            <p class="task-item"><strong>Task:</strong> {{.Task.Task}}</p>
+            <p class="task-item"><strong>Urgency:</strong> {{.Task.Urgency}}</p>
+            <p class="task-item"><strong>Hours:</strong> {{.Task.Hours}}</p>
             <p class="task-completed">
-                {{if .Completed}}Completed ✓{{else}}Not Completed ✗{{end}}
-            </p>
+                {{if .Task.Completed}}Completed ✓{{else}}Not Completed ✗{{end}}
+            </p>            
             <form action="/completeTask" id="completeThisTask" method="post" class="task-completed"
                 {{if .Completed}}style="display: none;"{{end}}>
                 <button type="submit" class="btn btn-success btn-block">Complete Task</button>
             </form>
-            <form action="/addTaskNote/{{.ID}}" method="post">
+            <form action="/addTaskNote/{{.Task.ID}}" method="post">
                 <div class="mb-3">
                     <label for="taskNote" class="form-label">Add Note</label>
                     <textarea class="form-control" id="taskNote" name="taskNote" rows="3"></textarea>
                 </div>
-                <button type="submit" class="btn btn-primary">Submit Note</button>
+                <button type="submit" class="btn btn-primary">Add Note</button>
             </form>
     
             <!-- Section to display notes -->

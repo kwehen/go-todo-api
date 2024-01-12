@@ -47,8 +47,8 @@ func NewAuth() {
 	googleClientSecret := os.Getenv("GOOGLE_CLIENT_SECRET")
 
 	goth.UseProviders(
-		// google.New(googleClientId, googleClientSecret, "https://test.home.kamaufoundation.com/auth/google/callback", "email", "profile"),
-		google.New(googleClientId, googleClientSecret, "http://localhost:8080/auth/google/callback", "email", "profile"),
+		google.New(googleClientId, googleClientSecret, "https://test.home.kamaufoundation.com/auth/google/callback", "email", "profile"),
+		// google.New(googleClientId, googleClientSecret, "http://localhost:8080/auth/google/callback", "email", "profile"),
 	)
 }
 
