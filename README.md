@@ -2,6 +2,7 @@
 Originally an API, now a full stack app written in GO, using Gin and GO templating. 
 ---
 This is a to-do list application hosted on a k3s cluster in my homelab and exposed for the public internet to use. Let me know about features, vulnerabilities, and anything else you think of that can be added to the application. I am very appreciative of the feedback.
+
 ---
 ### GitHub Actions
 The CI workflow in the project builds and pushes changes to Docker hub while updating another repositories tags with the newest image which is pulled down to my k3s cluster via ArgoCD, completing the entire CI/CD pipeline. More about the building of the pipeline can be found on [my blog](https://khenry.substack.com/p/the-hyperbolic-chamber-12182023).
