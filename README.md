@@ -6,6 +6,7 @@ This is a to-do list application hosted on a k3s cluster in my homelab and expos
 ---
 ### GitHub Actions
 The CI workflow in the project builds and pushes changes to Docker hub while updating another repositories tags with the newest image which is pulled down to my k3s cluster via ArgoCD, completing the entire CI/CD pipeline. More about the building of the pipeline can be found on [my blog](https://khenry.substack.com/p/the-hyperbolic-chamber-12182023).
+
 ![CI/CD architecture](https://github.com/kwehen/go-todo-api/assets/110314567/3b36f848-8874-49c6-94f6-fce4b2f99236)
 The TrueNAS CI builds and pushes changes to a different docker repo which hosts the production image of the application.
 
