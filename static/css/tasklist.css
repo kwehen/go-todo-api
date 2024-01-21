@@ -92,3 +92,25 @@ h1.text-center a:hover {
         padding: 8px;
     }
 }
+
+.back-button {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 1000; /* Ensures the button is above other elements */
+}
+
+#backBtn {
+    background-color: #007bff; /* Blue background */
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    text-decoration: none; /* Removes underline from text */
+}
+
+#backBtn:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
