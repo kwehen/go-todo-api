@@ -1,5 +1,5 @@
 # Start from the latest golang base image
-FROM golang:latest
+FROM cgr.dev/chainguard/go:latest
 
 # Add Maintainer Info
 LABEL maintainer="Kwesi Henry"
