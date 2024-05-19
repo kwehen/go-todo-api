@@ -66,7 +66,6 @@ jobs:
       - name: Modify Images
         run: |
           git config --global user.name "kwehen"
-          git config --global user.email "kwesihenry11@gmail.com"
           pwd
           cd manifest
           cat todo-manifest.yml
