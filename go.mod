@@ -1,6 +1,6 @@
 module github.com/kwehen/go-todo-api
 
-go 1.21.5
+go 1.23.0
 
 require (
 	github.com/gin-gonic/gin v1.9.1
@@ -11,12 +11,10 @@ require (
 
 require (
 	cloud.google.com/go v0.67.0 // indirect
-	github.com/golang/protobuf v1.5.0 // indirect
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/mux v1.6.2 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
-	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43 // indirect
-	google.golang.org/appengine v1.6.6 // indirect
+	golang.org/x/oauth2 v0.27.0 // indirect
 )
 
 require (
